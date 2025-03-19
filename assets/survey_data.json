@@ -1,0 +1,193 @@
+{
+  "id": 1,
+  "name": "نموذج تقييم جاهزية المباني للاشتراطات الوقائية",
+  "description": "استبيان لتقييم جاهزية المباني والمنشآت للاشتراطات الوقائية للدفاع المدني",
+  "questions": [
+    {
+      "id": 1,
+      "question": "هل يتوفر في المبنى نظام إنذار حريق يعمل بشكل جيد؟",
+      "helpText": "نظام إنذار الحريق يشمل الكواشف والأجراس ولوحة التحكم",
+      "questionType": 2,
+      "isRequired": true,
+      "allowMultipleAnswers": false,
+      "sortOrder": 1,
+      "answers": [
+        {
+          "id": 1,
+          "answer": "نعم، يوجد ويعمل بشكل جيد",
+          "sortOrder": 1
+        },
+        {
+          "id": 2,
+          "answer": "نعم، يوجد ولكن يحتاج صيانة",
+          "sortOrder": 2
+        },
+        {
+          "id": 3,
+          "answer": "لا يوجد نظام إنذار حريق",
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "question": "ما هو تاريخ آخر صيانة لنظام الإطفاء الآلي؟",
+      "helpText": "يرجى تحديد تاريخ آخر صيانة لنظام الإطفاء الآلي (الرشاشات)",
+      "questionType": 7,
+      "isRequired": true,
+      "allowMultipleAnswers": false,
+      "sortOrder": 2,
+      "answers": []
+    },
+    {
+      "id": 3,
+      "question": "ما هي معدات الإطفاء المتوفرة في المبنى؟",
+      "helpText": "اختر جميع معدات الإطفاء المتوفرة",
+      "questionType": 1,
+      "isRequired": true,
+      "allowMultipleAnswers": true,
+      "sortOrder": 3,
+      "answers": [
+        {
+          "id": 6,
+          "answer": "طفايات حريق يدوية",
+          "sortOrder": 1
+        },
+        {
+          "id": 7,
+          "answer": "نظام رشاشات مياه آلي",
+          "sortOrder": 2
+        },
+        {
+          "id": 8,
+          "answer": "خراطيم مياه داخلية",
+          "sortOrder": 3
+        },
+        {
+          "id": 9,
+          "answer": "أنظمة إطفاء بالغاز",
+          "sortOrder": 4
+        },
+        {
+          "id": 10,
+          "answer": "أعمدة إطفاء خارجية",
+          "sortOrder": 5
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "question": "كم عدد مخارج الطوارئ في المبنى؟",
+      "helpText": "يرجى إدخال عدد مخارج الطوارئ المتوفرة والصالحة للاستخدام",
+      "questionType": 8,
+      "isRequired": true,
+      "allowMultipleAnswers": false,
+      "sortOrder": 4,
+      "answers": []
+    },
+    {
+      "id": 5,
+      "question": "متى تم إجراء آخر تدريب على الإخلاء في المبنى؟",
+      "helpText": "اختر التاريخ التقريبي",
+      "questionType": 7,
+      "isRequired": true,
+      "allowMultipleAnswers": false,
+      "sortOrder": 5,
+      "answers": []
+    },
+    {
+      "id": 6,
+      "question": "هل يوجد لوحات إرشادية لمسارات الهروب؟",
+      "helpText": "اللوحات الإرشادية تشمل علامات الخروج وطرق الهروب",
+      "questionType": 2,
+      "isRequired": true,
+      "allowMultipleAnswers": false,
+      "sortOrder": 6,
+      "answers": [
+        {
+          "id": 11,
+          "answer": "نعم، كاملة وواضحة",
+          "sortOrder": 1
+        },
+        {
+          "id": 12,
+          "answer": "نعم، ولكن غير كافية",
+          "sortOrder": 2
+        },
+        {
+          "id": 13,
+          "answer": "لا يوجد لوحات إرشادية",
+          "sortOrder": 3
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "question": "يرجى تحميل صورة لشهادة الأمن والسلامة للمبنى",
+      "helpText": "قم بتحميل صورة لشهادة الأمن والسلامة سارية المفعول",
+      "questionType": 9,
+      "isRequired": false,
+      "allowMultipleAnswers": false,
+      "sortOrder": 7,
+      "answers": []
+    },
+    {
+      "id": 8,
+      "question": "ما هي الملاحظات الإضافية حول السلامة في المبنى؟",
+      "helpText": "اكتب أي ملاحظات أو نواقص إضافية",
+      "questionType": 10,
+      "isRequired": false,
+      "allowMultipleAnswers": false,
+      "sortOrder": 8,
+      "answers": []
+    },
+    {
+      "id": 9,
+      "question": "يرجى إدخال البريد الإلكتروني لمسؤول السلامة في المبنى",
+      "helpText": "البريد الإلكتروني للتواصل في حالات الطوارئ",
+      "questionType": 3,
+      "isRequired": true,
+      "allowMultipleAnswers": false,
+      "sortOrder": 9,
+      "validationRegex": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+      "validationMessage": "يرجى إدخال بريد إلكتروني صحيح",
+      "answers": []
+    },
+    {
+      "id": 10,
+      "question": "ما هو المستوى العام للالتزام باشتراطات السلامة؟",
+      "helpText": "تقييم عام لمستوى الالتزام بناءً على المعاينة",
+      "questionType": 4,
+      "isRequired": true,
+      "allowMultipleAnswers": false,
+      "sortOrder": 10,
+      "answers": [
+        {
+          "id": 14,
+          "answer": "ممتاز (90-100%)",
+          "sortOrder": 1
+        },
+        {
+          "id": 15,
+          "answer": "جيد جدًا (80-89%)",
+          "sortOrder": 2
+        },
+        {
+          "id": 16,
+          "answer": "جيد (70-79%)",
+          "sortOrder": 3
+        },
+        {
+          "id": 17,
+          "answer": "متوسط (60-69%)",
+          "sortOrder": 4
+        },
+        {
+          "id": 18,
+          "answer": "ضعيف (أقل من 60%)",
+          "sortOrder": 5
+        }
+      ]
+    }
+  ]
+}
