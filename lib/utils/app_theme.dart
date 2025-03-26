@@ -172,8 +172,113 @@ class AppTheme {
           borderRadius: BorderRadius.circular(radiusLg),
         ),
       ),
-      // Support RTL layout
-      textDirection: TextDirection.rtl,
+    );
+  }
+
+  /// Theme for dark mode
+  static ThemeData get darkTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      colorScheme: ColorScheme.dark(
+        primary: primary,
+        secondary: secondary,
+        background: Colors.black,
+        surface: Colors.grey[900]!,
+        onSurface: Colors.white,
+        error: error,
+      ),
+      scaffoldBackgroundColor: Colors.black,
+      cardColor: Colors.grey[900],
+      textTheme: TextTheme(
+        displayLarge: TextStyle(fontSize: xl5, fontWeight: FontWeight.bold),
+        displayMedium: TextStyle(fontSize: xl4, fontWeight: FontWeight.bold),
+        displaySmall: TextStyle(fontSize: xl3, fontWeight: FontWeight.bold),
+        headlineLarge: TextStyle(fontSize: xl3, fontWeight: FontWeight.bold),
+        headlineMedium: TextStyle(fontSize: xl2, fontWeight: FontWeight.w600),
+        headlineSmall: TextStyle(fontSize: xl, fontWeight: FontWeight.w600),
+        titleLarge: TextStyle(fontSize: xl, fontWeight: FontWeight.w600),
+        titleMedium: TextStyle(fontSize: lg, fontWeight: FontWeight.w600),
+        titleSmall: TextStyle(fontSize: base, fontWeight: FontWeight.w600),
+        bodyLarge: TextStyle(fontSize: base),
+        bodyMedium: TextStyle(fontSize: sm),
+        bodySmall: TextStyle(fontSize: xs),
+        labelLarge: TextStyle(fontSize: base, fontWeight: FontWeight.w500),
+        labelMedium: TextStyle(fontSize: sm, fontWeight: FontWeight.w500),
+        labelSmall: TextStyle(fontSize: xs, fontWeight: FontWeight.w500),
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.grey[900],
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primary,
+          foregroundColor: white,
+          padding: EdgeInsets.symmetric(
+            horizontal: spacing4,
+            vertical: spacing3,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(radiusMd),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: primary,
+          padding: EdgeInsets.symmetric(
+            horizontal: spacing4,
+            vertical: spacing3,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(radiusMd),
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: primary,
+          padding: EdgeInsets.symmetric(
+            horizontal: spacing4,
+            vertical: spacing3,
+          ),
+        ),
+      ),
+      iconTheme: IconThemeData(color: Colors.white),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.grey[900],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMd),
+          borderSide: BorderSide(color: gray300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMd),
+          borderSide: BorderSide(color: gray300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMd),
+          borderSide: BorderSide(color: primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusMd),
+          borderSide: BorderSide(color: error, width: 1),
+        ),
+        errorStyle: TextStyle(color: error, fontSize: xs),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: spacing4,
+          vertical: spacing3,
+        ),
+      ),
+      cardTheme: CardTheme(
+        color: Colors.grey[900],
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusLg),
+        ),
+      ),
     );
   }
 

@@ -233,9 +233,15 @@ class SurveyController extends GetxController {
     }
   }
   
+  /// Get all answers as a map
+  Map<int, dynamic>? getAnswers() {
+    if (answers.isEmpty) return null;
+    return answers;
+  }
+  
   /// Submit the survey with all answers
   Future<bool> submitSurvey({
-    required int incidentId,
+    int incidentId = 1,
     int? respondentId,
     String? respondentEmail,
     int languageId = AppConstants.defaultLanguageId,

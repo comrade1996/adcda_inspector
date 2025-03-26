@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 /// Application-wide constants to avoid magic strings
 class AppConstants {
   // API endpoints
@@ -50,4 +52,7 @@ class AppConstants {
   static const int shortAnimationDuration = 200; // milliseconds
   static const int mediumAnimationDuration = 500; // milliseconds
   static const int longAnimationDuration = 800; // milliseconds
+
+  // Text direction for RTL support
+  static const appTextDirection = TextDirection.rtl;
 }

@@ -1,17 +1,17 @@
-import 'package:adcda_inspector/constants/app_constants.dart';
-import 'package:adcda_inspector/controllers/survey_controller.dart';
-import 'package:adcda_inspector/models/question_type.dart';
-import 'package:adcda_inspector/models/survey.dart' as app_models;
-import 'package:adcda_inspector/theme/app_colors.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:flutter_form_builder/src/form_builder_field.dart' show OptionsOrientation;
-import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:adcda_inspector/models/survey.dart' as app_models;
+import 'package:adcda_inspector/models/question_type.dart';
+import 'package:adcda_inspector/controllers/survey_controller.dart';
+import 'package:adcda_inspector/constants/app_constants.dart';
+import 'package:adcda_inspector/constants/app_colors.dart';
+import 'package:adcda_inspector/utils/background_decorator.dart';
 
-/// Base widget for survey questions
+/// Base question widget that handles different question types
 class QuestionWidget extends StatelessWidget {
   final app_models.SurveyQuestion question;
   final SurveyController controller;
@@ -24,161 +24,127 @@ class QuestionWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget questionWidget;
-    
-    // Select the appropriate widget based on question type
-    switch (question.questionType) {
-      case QuestionType.radioButton:
-        questionWidget = RadioButtonQuestionWidget(
-          question: question,
-          controller: controller,
-        );
-        break;
-      case QuestionType.checkBox:
-        questionWidget = CheckBoxQuestionWidget(
-          question: question,
-          controller: controller,
-        );
-        break;
-      case QuestionType.dropDown:
-        questionWidget = DropdownQuestionWidget(
-          question: question,
-          controller: controller,
-        );
-        break;
-      case QuestionType.multiSelect:
-        questionWidget = MultiSelectQuestionWidget(
-          question: question,
-          controller: controller,
-        );
-        break;
-      case QuestionType.textBox:
-      case QuestionType.numeric:
-      case QuestionType.comment:
-        questionWidget = TextBoxQuestionWidget(
-          question: question,
-          controller: controller,
-        );
-        break;
-      case QuestionType.fileUpload:
-        questionWidget = FileUploadQuestionWidget(
-          question: question,
-          controller: controller,
-        );
-        break;
-      case QuestionType.rating:
-        questionWidget = RatingQuestionWidget(
-          question: question,
-          controller: controller,
-        );
-        break;
-      case QuestionType.date:
-        questionWidget = DateTimeQuestionWidget(
-          question: question,
-          controller: controller,
-        );
-        break;
-      default:
-        questionWidget = TextBoxQuestionWidget(
-          question: question,
-          controller: controller,
-        );
-    }
-
-    // Build the question container with consistent styling
+    // Wrap with a container to ensure white background
     return Container(
       margin: EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadow.withOpacity(0.1),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-        border: Border.all(
-          color: AppColors.borderColor,
-          width: 1,
-        ),
-      ),
+      padding: EdgeInsets.all(16),
+      decoration: BackgroundDecorator.lightPatternDecoration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Question header with number badge
-          Container(
-            padding: EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.03),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
-              ),
-              border: Border(
-                bottom: BorderSide(
-                  color: AppColors.borderColor,
-                  width: 1,
+          // Question title with required indicator if needed
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            // Fix RTL issue by removing textDirection explicitly
+            children: [
+              Expanded(
+                child: Text(
+                  question.question ??
+                      'سؤال', // Using question field instead of questionText
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                    fontFamily: 'NotoKufiArabic',
+                  ),
+                  textAlign: TextAlign.right,
                 ),
               ),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Question number badge
-                Container(
-                  width: 32,
-                  height: 32,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text(
-                    '${question.id}',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
+              if (question.isRequired)
+                Text(
+                  ' *',
+                  style: TextStyle(
+                    color: AppColors.error,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
                 ),
-                SizedBox(width: 12),
-                // Question text
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (question.question != null)
-                        Text(
-                          question.question!,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      if (question.helpText != null)
-                        Padding(
-                          padding: EdgeInsets.only(top: 4),
-                          child: Text(
-                            question.helpText!,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+            ],
           ),
+          SizedBox(height: 12),
           // Question input field
-          Padding(
-            padding: EdgeInsets.all(16),
-            child: questionWidget,
+          FormBuilderField(
+            name: 'question_${question.id}',
+            validator: null, // Remove validator from here, will handle in individual widgets
+            onChanged: (value) {
+              controller.updateAnswer(question.id, value);
+            },
+            builder: (FormFieldState<dynamic> field) {
+              Widget questionWidget;
+
+              // Select the appropriate widget based on question type
+              switch (question.questionType) {
+                case QuestionType.radioButton:
+                  questionWidget = RadioButtonQuestionWidget(
+                    question: question,
+                    controller: controller,
+                  );
+                  break;
+                case QuestionType.checkBox:
+                  questionWidget = CheckBoxQuestionWidget(
+                    question: question,
+                    controller: controller,
+                  );
+                  break;
+                case QuestionType.dropDown:
+                  questionWidget = DropdownQuestionWidget(
+                    question: question,
+                    controller: controller,
+                  );
+                  break;
+                case QuestionType.multiSelect:
+                  questionWidget = MultiSelectQuestionWidget(
+                    question: question,
+                    controller: controller,
+                  );
+                  break;
+                case QuestionType.textBox:
+                case QuestionType.numeric:
+                case QuestionType.comment:
+                  questionWidget = TextBoxQuestionWidget(
+                    question: question,
+                    controller: controller,
+                  );
+                  break;
+                case QuestionType.fileUpload:
+                  questionWidget = FileUploadQuestionWidget(
+                    question: question,
+                    controller: controller,
+                  );
+                  break;
+                case QuestionType.rating:
+                  questionWidget = RatingQuestionWidget(
+                    question: question,
+                    controller: controller,
+                  );
+                  break;
+                case QuestionType.date:
+                  questionWidget = DateTimeQuestionWidget(
+                    question: question,
+                    controller: controller,
+                  );
+                  break;
+                default:
+                  questionWidget = TextBoxQuestionWidget(
+                    question: question,
+                    controller: controller,
+                  );
+              }
+
+              return Column(
+                children: [
+                  questionWidget,
+                  if (field.errorText != null)
+                    Padding(
+                      padding: EdgeInsets.only(top: 8),
+                      child: Text(
+                        field.errorText!,
+                        style: TextStyle(color: AppColors.error, fontSize: 12),
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -187,7 +153,7 @@ class QuestionWidget extends StatelessWidget {
 }
 
 /// RadioButton question type widget
-class RadioButtonQuestionWidget extends StatelessWidget {
+class RadioButtonQuestionWidget extends StatefulWidget {
   final app_models.SurveyQuestion question;
   final SurveyController controller;
 
@@ -198,41 +164,100 @@ class RadioButtonQuestionWidget extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<RadioButtonQuestionWidget> createState() => _RadioButtonQuestionWidgetState();
+}
+
+class _RadioButtonQuestionWidgetState extends State<RadioButtonQuestionWidget> {
+  // Local state to track selection
+  String? selectedValue;
+  
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with any existing value
+    selectedValue = widget.controller.getAnswer(widget.question.id);
+  }
+  
+  @override
   Widget build(BuildContext context) {
     // Use answers if validValues is not available
-    final options = question.validValues ?? 
-                    question.answers.map((a) => 
-                        app_models.ValidValue(
-                            value: a.id.toString(), 
-                            text: a.answer
+    final options =
+        widget.question.validValues ??
+        widget.question.answers
+            .map(
+              (a) =>
+                  app_models.ValidValue(value: a.id.toString(), text: a.answer),
+            )
+            .toList();
+    
+    // Custom radio button implementation for better visibility
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: options.map((option) {
+        final optionValue = option.value ?? '';
+        final optionText = option.text ?? '';
+        
+        // Check if this option is selected
+        final isSelected = selectedValue == optionValue;
+        
+        return Container(
+          margin: EdgeInsets.only(bottom: 12),
+          child: InkWell(
+            onTap: () {
+              // Update both local state and controller
+              setState(() {
+                selectedValue = optionValue;
+              });
+              widget.controller.updateAnswer(widget.question.id, optionValue);
+            },
+            child: Row(
+              children: [
+                Container(
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected 
+                          ? AppColors.primary
+                          : Colors.grey[400]!,
+                      width: 2.5,
+                    ),
+                    color: isSelected 
+                        ? AppColors.primary 
+                        : Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 2,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                  child: isSelected
+                      ? Icon(
+                          Icons.check,
+                          size: 14,
+                          color: Colors.white,
                         )
-                    ).toList();
-
-    return FormBuilderRadioGroup<String>(
-      name: 'question_${question.id}',
-      decoration: InputDecoration(
-        border: InputBorder.none,
-        contentPadding: EdgeInsets.zero,
-        errorText: controller.getValidationError(question.id),
-      ),
-      validator: question.isRequired
-          ? FormBuilderValidators.required(errorText: AppConstants.requiredField)
-          : null,
-      options: options
-          .map((option) => FormBuilderFieldOption<String>(
-                value: option.value ?? '',
-                child: Text(
-                  option.text ?? '',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 14,
+                      : null,
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    optionText,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                      fontFamily: 'NotoKufiArabic',
+                    ),
                   ),
                 ),
-              ))
-          .toList(),
-      onChanged: (value) {
-        controller.updateAnswer(question.id, value);
-      },
+              ],
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }
@@ -251,42 +276,53 @@ class CheckBoxQuestionWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Use answers if validValues is not available
-    final options = question.validValues ?? 
-                    question.answers.map((a) => 
-                        app_models.ValidValue(
-                            value: a.id.toString(), 
-                            text: a.answer
-                        )
-                    ).toList();
+    final options =
+        question.validValues ??
+        question.answers
+            .map(
+              (a) =>
+                  app_models.ValidValue(value: a.id.toString(), text: a.answer),
+            )
+            .toList();
     final initialValues = controller.getAnswerAsList(question.id);
 
-    return FormBuilderCheckboxGroup<String>(
-      name: 'question_${question.id}',
-      separator: SizedBox(height: 10),
-      decoration: InputDecoration(
-        border: InputBorder.none,
-        contentPadding: EdgeInsets.zero,
-        errorText: controller.getValidationError(question.id),
-      ),
-      validator: question.isRequired
-          ? FormBuilderValidators.required(errorText: AppConstants.requiredField)
-          : null,
-      options: options
-          .map((option) => FormBuilderFieldOption<String>(
-                value: option.value ?? '',
-                child: Text(
-                  option.text ?? '',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 14,
+    return Container(
+      decoration: BackgroundDecorator.cardPatternDecoration,
+      child: FormBuilderCheckboxGroup<String>(
+        name: 'question_${question.id}',
+        orientation: OptionsOrientation.vertical,
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          fillColor: Colors.white,
+          filled: true,
+        ),
+        validator:
+            question.isRequired
+                ? FormBuilderValidators.required(
+                  errorText: AppConstants.requiredField,
+                )
+                : null,
+        options:
+            options
+                .map(
+                  (option) => FormBuilderFieldOption<String>(
+                    value: option.value ?? '',
+                    child: Text(
+                      option.text ?? '',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 14,
+                        fontFamily: 'NotoKufiArabic',
+                      ),
+                    ),
                   ),
-                ),
-              ))
-          .toList(),
-      initialValue: initialValues,
-      onChanged: (values) {
-        controller.updateAnswer(question.id, values);
-      },
+                )
+                .toList(),
+        initialValue: initialValues,
+        onChanged: (values) {
+          controller.updateAnswer(question.id, values);
+        },
+      ),
     );
   }
 }
@@ -305,61 +341,53 @@ class DropdownQuestionWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Use answers if validValues is not available
-    final options = question.validValues ?? 
-                    question.answers.map((a) => 
-                        app_models.ValidValue(
-                            value: a.id.toString(), 
-                            text: a.answer
-                        )
-                    ).toList();
+    final options =
+        question.validValues ??
+        question.answers
+            .map(
+              (a) =>
+                  app_models.ValidValue(value: a.id.toString(), text: a.answer),
+            )
+            .toList();
     final initialValue = controller.getAnswer(question.id);
 
     return FormBuilderDropdown<String>(
       name: 'question_${question.id}',
       decoration: InputDecoration(
-        filled: true,
-        fillColor: Colors.white,
         hintText: 'اختر إجابة',
-        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        fillColor: Colors.white,
+        filled: true,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(
-            color: AppColors.primary,
-            width: 1,
-          ),
+          borderSide: BorderSide(color: AppColors.borderColor, width: 1),
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(
-            color: AppColors.borderColor,
-            width: 1,
-          ),
-        ),
-        errorText: controller.getValidationError(question.id),
       ),
-      validator: question.isRequired
-          ? FormBuilderValidators.required(errorText: AppConstants.requiredField)
-          : null,
-      items: options
-          .map((option) => DropdownMenuItem<String>(
-                value: option.value ?? '',
-                child: Text(
-                  option.text ?? '',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 14,
+      validator:
+          question.isRequired
+              ? FormBuilderValidators.required(
+                errorText: AppConstants.requiredField,
+              )
+              : null,
+      items:
+          options
+              .map(
+                (option) => DropdownMenuItem<String>(
+                  value: option.value ?? '',
+                  child: Text(
+                    option.text ?? '',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                      fontFamily: 'NotoKufiArabic',
+                    ),
                   ),
                 ),
-              ))
-          .toList(),
+              )
+              .toList(),
       initialValue: initialValue,
       onChanged: (value) {
         controller.updateAnswer(question.id, value);
       },
-      icon: Icon(Icons.arrow_drop_down, color: AppColors.primary),
-      alignment: AlignmentDirectional.centerEnd,
-      dropdownColor: Colors.white,
-      borderRadius: BorderRadius.circular(8),
     );
   }
 }
@@ -378,13 +406,14 @@ class MultiSelectQuestionWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Use answers if validValues is not available
-    final options = question.validValues ?? 
-                    question.answers.map((a) => 
-                        app_models.ValidValue(
-                            value: a.id.toString(), 
-                            text: a.answer
-                        )
-                    ).toList();
+    final options =
+        question.validValues ??
+        question.answers
+            .map(
+              (a) =>
+                  app_models.ValidValue(value: a.id.toString(), text: a.answer),
+            )
+            .toList();
     final initialValues = controller.getAnswerAsList(question.id);
 
     // Using Wrap with ChoiceChip for multi-select instead of FormBuilderFilterChip
@@ -392,42 +421,89 @@ class MultiSelectQuestionWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: options.map((option) {
-              final isSelected = initialValues.contains(option.value);
-              return ChoiceChip(
-                label: Text(
-                  option.text ?? '',
-                  style: TextStyle(
-                    color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                    fontSize: 14,
-                  ),
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: AppColors.borderColor,
+                width: 1.0,
+              ),
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                  spreadRadius: 1,
                 ),
-                selected: isSelected,
-                selectedColor: AppColors.primary.withOpacity(0.15),
-                backgroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(
-                    color: isSelected ? AppColors.primary : AppColors.borderColor,
-                    width: isSelected ? 1.5 : 1.0,
-                  ),
-                ),
-                onSelected: (selected) {
-                  final List<String> updatedValues = List.from(initialValues);
-                  if (selected) {
-                    if (!updatedValues.contains(option.value)) {
-                      updatedValues.add(option.value ?? '');
-                    }
-                  } else {
-                    updatedValues.remove(option.value);
-                  }
-                  controller.updateAnswer(question.id, updatedValues);
-                },
-              );
-            }).toList(),
+              ],
+            ),
+            child: Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children:
+                  options.map((option) {
+                    final isSelected = initialValues.contains(option.value);
+                    return Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: isSelected ? AppColors.primary : AppColors.borderColor,
+                          width: isSelected ? 1.5 : 1.0,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 2,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                      margin: EdgeInsets.symmetric(vertical: 4), 
+                      child: ChoiceChip(
+                        label: Text(
+                          option.text ?? '',
+                          style: TextStyle(
+                            color:
+                                isSelected
+                                    ? AppColors.primary
+                                    : AppColors.textPrimary,
+                            fontSize: 14,
+                            fontFamily: 'NotoKufiArabic',
+                          ),
+                        ),
+                        selected: isSelected,
+                        selectedColor: AppColors.primary.withOpacity(0.15),
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: BorderSide(
+                            color:
+                                isSelected
+                                    ? AppColors.primary
+                                    : AppColors.borderColor,
+                            width: isSelected ? 1.5 : 1.0,
+                          ),
+                        ),
+                        onSelected: (selected) {
+                          final List<String> updatedValues = List.from(
+                            initialValues,
+                          );
+                          if (selected) {
+                            if (!updatedValues.contains(option.value)) {
+                              updatedValues.add(option.value ?? '');
+                            }
+                          } else {
+                            updatedValues.remove(option.value);
+                          }
+                          controller.updateAnswer(question.id, updatedValues);
+                        },
+                      ),
+                    );
+                  }).toList(),
+            ),
           ),
           // Error message
           if (controller.getValidationError(question.id) != null)
@@ -435,10 +511,7 @@ class MultiSelectQuestionWidget extends StatelessWidget {
               padding: EdgeInsets.only(top: 8),
               child: Text(
                 controller.getValidationError(question.id)!,
-                style: TextStyle(
-                  color: AppColors.error,
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: AppColors.error, fontSize: 12),
               ),
             ),
         ],
@@ -460,40 +533,64 @@ class TextBoxQuestionWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initialValue = controller.getAnswer(question.id);
-    final isMultiline = question.multiline ?? 
-                        question.questionType == QuestionType.comment;
+    // Check if this should be a multiline text field
+    bool isMultiline = question.questionType == QuestionType.comment;
 
     return FormBuilderTextField(
       name: 'question_${question.id}',
       decoration: InputDecoration(
-        filled: true,
-        fillColor: Colors.white,
         hintText: question.placeholder ?? 'أدخل إجابتك هنا',
+        fillColor: Color(0xFFF1F1F4), 
+        filled: true,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide.none, 
         ),
-        errorText: controller.getValidationError(question.id),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: AppColors.primary, width: 1.5),
+        ),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: isMultiline ? 16 : 14),
+        errorText: null, // Removed duplicate validation message
+        hintStyle: TextStyle(
+          color: Color(0xFF9CA3AF), 
+          fontSize: 14,
+          fontFamily: 'NotoKufiArabic',
+        ),
+        errorStyle: TextStyle(
+          color: Colors.red[700],
+          fontSize: 12,
+          fontFamily: 'NotoKufiArabic',
+        ),
       ),
-      validator: question.isRequired
-          ? FormBuilderValidators.required(errorText: AppConstants.requiredField)
-          : null,
-      initialValue: initialValue,
+      initialValue: controller.getAnswer(question.id),
+      maxLines: isMultiline ? 5 : 1,
+      keyboardType: isMultiline ? TextInputType.multiline : TextInputType.text,
+      validator:
+          question.isRequired
+              ? FormBuilderValidators.required(
+                errorText: AppConstants.requiredField,
+              )
+              : null,
       onChanged: (value) {
         controller.updateAnswer(question.id, value);
       },
-      maxLines: isMultiline ? 4 : 1,
-      textAlign: TextAlign.start,
       style: TextStyle(
         color: AppColors.textPrimary,
         fontSize: 14,
+        fontFamily: 'NotoKufiArabic',
       ),
+      textAlign: TextAlign.right,
     );
   }
 }
 
 /// File upload question type widget
-class FileUploadQuestionWidget extends StatelessWidget {
+class FileUploadQuestionWidget extends StatefulWidget {
   final app_models.SurveyQuestion question;
   final SurveyController controller;
 
@@ -504,9 +601,26 @@ class FileUploadQuestionWidget extends StatelessWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final fileName = controller.getAnswer(question.id);
+  State<FileUploadQuestionWidget> createState() =>
+      _FileUploadQuestionWidgetState();
+}
 
+class _FileUploadQuestionWidgetState extends State<FileUploadQuestionWidget> {
+  String? _fileName;
+  String? _filePath;
+
+  @override
+  void initState() {
+    super.initState();
+    final answer = widget.controller.getAnswer(widget.question.id);
+    if (answer != null) {
+      _filePath = answer;
+      _fileName = answer.split('/').last;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -520,78 +634,74 @@ class FileUploadQuestionWidget extends StatelessWidget {
 
             if (result != null) {
               PlatformFile file = result.files.first;
-              controller.updateAnswer(question.id, file.path);
+              widget.controller.updateAnswer(widget.question.id, file.path);
+              setState(() {
+                _fileName = file.name;
+                _filePath = file.path;
+              });
             }
           },
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: AppColors.borderColor,
-                width: 1,
-              ),
-            ),
+            padding: const EdgeInsets.all(16),
+            decoration: BackgroundDecorator.cardPatternDecoration,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.upload_file),
-                SizedBox(width: 8),
-                Text('اختر ملف'),
+                Icon(Icons.upload_file, color: AppColors.primary),
+                SizedBox(width: 12),
+                Text(
+                  'اختر ملف',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'NotoKufiArabic',
+                  ),
+                ),
               ],
             ),
           ),
         ),
-        
-        // Display selected file name
-        if (fileName != null && fileName.isNotEmpty)
-          Padding(
-            padding: EdgeInsets.only(top: 8),
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.description, size: 16, color: AppColors.primary),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      fileName,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textPrimary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.close, size: 16),
-                    padding: EdgeInsets.zero,
-                    constraints: BoxConstraints(),
-                    onPressed: () => controller.updateAnswer(question.id, null),
-                    color: AppColors.textSecondary,
-                  ),
-                ],
-              ),
+
+        if (_fileName != null)
+          Container(
+            margin: EdgeInsets.only(top: 12),
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.borderColor, width: 1),
             ),
-          ),
-          
-        // Error message
-        if (controller.getValidationError(question.id) != null)
-          Padding(
-            padding: EdgeInsets.only(top: 8),
-            child: Text(
-              controller.getValidationError(question.id)!,
-              style: TextStyle(
-                color: AppColors.error,
-                fontSize: 12,
-              ),
+            child: Row(
+              children: [
+                Icon(Icons.description, color: AppColors.primary, size: 20),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _fileName!,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textPrimary,
+                      fontFamily: 'NotoKufiArabic',
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.close, color: AppColors.error, size: 18),
+                  onPressed: () {
+                    setState(() {
+                      _fileName = null;
+                      _filePath = null;
+                    });
+                    widget.controller.updateAnswer(widget.question.id, null);
+                  },
+                  padding: EdgeInsets.zero,
+                  constraints: BoxConstraints(),
+                ),
+              ],
             ),
           ),
       ],
@@ -612,57 +722,79 @@ class RatingQuestionWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initialValue = controller.getAnswer(question.id);
-    double? initialRating;
-    
-    try {
-      if (initialValue != null && initialValue.isNotEmpty) {
-        initialRating = double.parse(initialValue);
-      }
-    } catch (e) {
-      initialRating = null;
-    }
+    // Default max rating is 5
+    double maxRating = 5;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Center(
-          child: RatingBar.builder(
-            initialRating: initialRating ?? 0,
-            minRating: 1,
-            direction: Axis.horizontal,
-            allowHalfRating: false,
-            itemCount: 5,
-            itemPadding: EdgeInsets.symmetric(horizontal: 4.0),
-            itemBuilder: (context, _) => Icon(
-              Icons.star,
-              color: AppColors.primary,
+    // We don't use options in SurveyQuestion as it doesn't exist in the model
+
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BackgroundDecorator.cardPatternDecoration,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'التقييم: ${controller.getAnswer(question.id) ?? '0'}',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+              fontFamily: 'NotoKufiArabic',
             ),
-            onRatingUpdate: (rating) {
-              controller.updateAnswer(question.id, rating.toString());
-            },
           ),
-        ),
-        
-        // Error message
-        if (controller.getValidationError(question.id) != null)
-          Padding(
-            padding: EdgeInsets.only(top: 8),
-            child: Text(
-              controller.getValidationError(question.id)!,
-              style: TextStyle(
-                color: AppColors.error,
-                fontSize: 12,
+          SizedBox(height: 12),
+          Center(
+            child: RatingBar.builder(
+              initialRating:
+                  controller.getAnswer(question.id) != null
+                      ? double.parse(controller.getAnswer(question.id)!)
+                      : 0,
+              minRating: 0,
+              maxRating: maxRating,
+              direction: Axis.horizontal,
+              allowHalfRating: true,
+              itemCount: maxRating.toInt(),
+              itemPadding: EdgeInsets.symmetric(horizontal: 4.0),
+              itemBuilder:
+                  (context, _) => Icon(Icons.star, color: AppColors.primary),
+              onRatingUpdate: (rating) {
+                controller.updateAnswer(question.id, rating.toString());
+              },
+            ),
+          ),
+          if (maxRating > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'ضعيف',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                      fontFamily: 'NotoKufiArabic',
+                    ),
+                  ),
+                  Text(
+                    'ممتاز',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                      fontFamily: 'NotoKufiArabic',
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }
 
 /// DateTime question type widget
-class DateTimeQuestionWidget extends StatelessWidget {
+class DateTimeQuestionWidget extends StatefulWidget {
   final app_models.SurveyQuestion question;
   final SurveyController controller;
 
@@ -673,42 +805,96 @@ class DateTimeQuestionWidget extends StatelessWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final initialValue = controller.getAnswer(question.id);
-    // Create a unique key for each date time picker instance
-    final String fieldName = 'question_${question.id}';
+  State<DateTimeQuestionWidget> createState() => _DateTimeQuestionWidgetState();
+}
 
-    return FormBuilderDateTimePicker(
-      name: fieldName,
-      inputType: InputType.date,
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: Colors.white,
-        hintText: 'اختر تاريخ',
-        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(
-            color: AppColors.primary,
-            width: 1,
+class _DateTimeQuestionWidgetState extends State<DateTimeQuestionWidget> {
+  @override
+  Widget build(BuildContext context) {
+    final format = DateFormat('yyyy-MM-dd');
+    // Create a stable field name (no timestamp) to avoid GlobalKey conflicts and rebuilds
+    final fieldName = 'datetime_${widget.question.id}';
+    
+    // Try to parse existing date value if available
+    DateTime? initialDate;
+    if (widget.controller.getAnswer(widget.question.id) != null) {
+      try {
+        final dateStr = widget.controller.getAnswer(widget.question.id)!;
+        initialDate = DateTime.tryParse(dateStr);
+      } catch (e) {
+        // Silently handle parse errors
+      }
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            spreadRadius: 1,
           ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(
-            color: AppColors.borderColor,
-            width: 1,
-          ),
-        ),
-        errorText: controller.getValidationError(question.id),
+        ],
       ),
-      validator: question.isRequired
-          ? FormBuilderValidators.required(errorText: AppConstants.requiredField)
-          : null,
-      initialValue: initialValue != null ? DateTime.parse(initialValue) : null,
-      onChanged: (value) {
-        controller.updateAnswer(question.id, value.toString());
-      },
+      child: FormBuilderDateTimePicker(
+        name: fieldName,
+        inputType: InputType.date,
+        format: format,
+        decoration: InputDecoration(
+          labelText: 'حدد التاريخ',
+          labelStyle: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.w500,
+            fontFamily: 'NotoKufiArabic',
+          ),
+          hintText: 'اضغط لاختيار التاريخ',
+          hintStyle: TextStyle(
+            color: Colors.grey[500],
+            fontFamily: 'NotoKufiArabic',
+          ),
+          fillColor: Color(0xFFF1F1F4),
+          filled: true,
+          prefixIcon: Container(
+            padding: EdgeInsets.all(12),
+            child: Icon(Icons.calendar_today, color: AppColors.primary, size: 22),
+          ),
+          suffixIcon: Icon(Icons.arrow_drop_down, color: Colors.black87, size: 24),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey[400]!, width: 1),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey[400]!, width: 1),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: AppColors.primary, width: 1.5),
+          ),
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          errorStyle: TextStyle(
+            color: Colors.red[700],
+            fontSize: 12,
+            fontFamily: 'NotoKufiArabic',
+          ),
+        ),
+        validator:
+            widget.question.isRequired
+                ? FormBuilderValidators.required(
+                  errorText: AppConstants.requiredField,
+                )
+                : null,
+        initialValue: initialDate,
+        onChanged: (value) {
+          widget.controller.updateAnswer(widget.question.id, value.toString());
+        },
+        style: TextStyle(
+          color: Colors.black,
+          fontSize: 16,
+          fontFamily: 'NotoKufiArabic',
+        ),
+        locale: const Locale('ar', 'AE'),
+      ),
     );
   }
 }

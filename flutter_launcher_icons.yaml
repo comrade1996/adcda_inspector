@@ -1,0 +1,16 @@
+flutter_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/inspection.png"
+  adaptive_icon_background: "#000000" # Black background
+  adaptive_icon_foreground: "assets/images/inspection.png"
+  remove_alpha_ios: false # Keep transparency for iOS
+  web:
+    generate: true
+    image_path: "assets/images/inspection.png"
+    background_color: "#000000"
+    theme_color: "#000000"
+  windows:
+    generate: true
+    image_path: "assets/images/inspection.png"
+    icon_size: 48 # Windows icon size

@@ -1,10 +1,13 @@
 import 'package:adcda_inspector/constants/app_constants.dart';
+import 'package:adcda_inspector/constants/app_colors.dart';
 import 'package:adcda_inspector/controllers/survey_controller.dart';
 import 'package:adcda_inspector/widgets/question_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:get/get.dart';
+import 'package:adcda_inspector/utils/background_decorator.dart';
+import 'package:lottie/lottie.dart';
 
 class SurveyScreen extends StatefulWidget {
   final int surveyId;
@@ -44,241 +47,467 @@ class _SurveyScreenState extends State<SurveyScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Obx(() => Text(_controller.survey.value?.name ?? 'Survey')),
-        backgroundColor: Colors.white, // White AppBar
-        foregroundColor: Colors.black,
-        elevation: 0, // Remove shadow
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          color: Colors.grey[100], // Very light grey background
-          image: DecorationImage(
-            image: AssetImage("assets/background_pattern.png"), // Replace with your pattern
-            fit: BoxFit.cover,
-            colorFilter: ColorFilter.mode(
-              Colors.white.withOpacity(0.1),
-              BlendMode.dstATop,
-            ),
+        backgroundColor: Colors.black,
+        elevation: 0,
+        centerTitle: false,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.white, size: 22),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(
+          'استبيان',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'NotoKufiArabic',
           ),
         ),
-        child: Obx(() {
-          if (_controller.isLoading.value) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                        Color(0xFF007BFF)), // Placeholder ADCDA color
-                  ).animate().rotate(duration: 800.ms),
-                  SizedBox(height: 16),
-                  Text(AppConstants.loadingText),
-                ],
+      ),
+      body: Obx(() {
+        if (_controller.isLoading.value) {
+          return Container(
+            color: Colors.black,
+            child: Center(
+              child: SizedBox(
+                width: 60,
+                height: 60,
+                child: CircularProgressIndicator(
+                  color: AppColors.primary,
+                  strokeWidth: 2,
+                ),
               ),
-            );
-          }
+            ),
+          );
+        }
+          
+        if (_controller.survey.value == null) {
+          return _buildErrorState();
+        }
+          
+        if (_controller.isCompleted.value) {
+          return _buildCompletionScreen();
+        }
 
-          if (_controller.survey.value == null) {
-            return Center(
-              child: Text('Failed to load survey. Please try again.'),
-            );
-          }
+        return _buildSurveyContent();
+      }),
+    );
+  }
 
-          if (_controller.isCompleted.value) {
-            return _buildCompletionScreen();
-          }
-
-          return _buildSurveyForm();
-        }),
+  Widget _buildErrorState() {
+    return Container(
+      color: Colors.black,
+      padding: const EdgeInsets.all(24),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, color: Colors.white70, size: 48),
+            SizedBox(height: 24),
+            Text(
+              'فشل تحميل الاستبيان',
+              style: TextStyle(
+                color: Colors.white,
+                fontFamily: 'NotoKufiArabic',
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
+                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                'الرجوع',
+                style: TextStyle(
+                  fontFamily: 'NotoKufiArabic',
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildSurveyForm() {
-    return FormBuilder(
-      key: _formKey,
+  Widget _buildSurveyContent() {
+    return Container(
+      color: Colors.black,
       child: Column(
         children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
+          // Progress indicator
+          Container(
+            width: double.infinity,
+            height: 2,
+            color: Colors.white12,
+            child: Row(
+              children: [
+                Container(
+                  width: MediaQuery.of(context).size.width * 
+                    ((_controller.currentQuestionIndex.value + 1) / _controller.totalQuestions),
+                  color: Colors.white,
+                ),
+              ],
+            ),
+          ),
+
+          // Survey name
+          if (_controller.survey.value?.name != null)
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Display survey description if available
+                  Text(
+                    _controller.survey.value!.name!,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontFamily: 'NotoKufiArabic',
+                    ),
+                  ),
+                  SizedBox(height: 8),
                   if (_controller.survey.value?.description != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 24.0),
-                      child: Text(
-                        _controller.survey.value!.description!,
-                        style: Theme.of(context).textTheme.bodyLarge,
+                    Text(
+                      _controller.survey.value!.description!,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white54,
+                        fontFamily: 'NotoKufiArabic',
+                        height: 1.5,
                       ),
                     ),
-
-                  // Progress indicator
-                  LinearProgressIndicator(
-                    value: (_controller.currentQuestionIndex.value + 1) /
-                        _controller.totalQuestions,
-                    backgroundColor: Colors.grey[300],
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                        Color(0xFF007BFF)), // Placeholder ADCDA color
+                  SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.white24, width: 1),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          'السؤال ${_controller.currentQuestionIndex.value + 1} من ${_controller.totalQuestions}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white70,
+                            fontFamily: 'NotoKufiArabic',
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Text(
-                      'Question ${_controller.currentQuestionIndex.value + 1} of ${_controller.totalQuestions}',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ),
-                  SizedBox(height: 16),
-
-                  // Current question
-                  if (_controller.currentQuestion != null)
-                    QuestionWidget(
-                      question: _controller.currentQuestion!,
-                      controller: _controller,
-                    ).animate().fadeIn(duration: 300.ms),
-                  else
-                    Text('No questions available'),
                 ],
               ),
             ),
+
+          // Survey questions
+          Expanded(
+            child: Container(
+              padding: EdgeInsets.fromLTRB(16, 0, 16, 90),
+              child: FormBuilder(
+                key: _formKey,
+                child: SingleChildScrollView(
+                  physics: BouncingScrollPhysics(),
+                  child: _buildQuestionCard(),
+                ),
+              ),
+            ),
           ),
-          // Bottom navigation buttons
-          _buildNavigationButtons(),
+
+          // Bottom navigation
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _buildNavigationBar(),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildNavigationButtons() {
+  Widget _buildQuestionCard() {
+    if (_controller.currentQuestion == null) {
+      return Container(
+        margin: EdgeInsets.all(16),
+        padding: EdgeInsets.all(24),
+        child: Center(
+          child: Text(
+            'لا توجد أسئلة متاحة',
+            style: TextStyle(
+              fontSize: 16,
+              fontFamily: 'NotoKufiArabic',
+              color: Colors.white70,
+            ),
+          ),
+        ),
+      );
+    }
+    
     return Container(
-      padding: EdgeInsets.all(16),
+      margin: EdgeInsets.symmetric(vertical: 16),
+      child: Padding(
+        padding: EdgeInsets.all(20),
+        child: QuestionWidget(
+          question: _controller.currentQuestion!,
+          controller: _controller,
+        ).animate().fadeIn(duration: 300.ms),
+      ),
+    );
+  }
+
+  Widget _buildNavigationBar() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.black,
         boxShadow: [
           BoxShadow(
-            color: Colors.black12,
-            blurRadius: 4,
-            offset: Offset(0, -2),
+            color: Colors.black26,
+            blurRadius: 10,
+            offset: Offset(0, -4),
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Previous button
-          Obx(() => ElevatedButton.icon(
-                onPressed: _controller.isFirstQuestion
-                    ? null
-                    : () {
-                        _controller.previousQuestion();
-                      },
-                icon: Icon(Icons.arrow_back),
-                label: Text(AppConstants.previousButton),
+      child: SafeArea(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            if (_controller.currentQuestionIndex.value > 0)
+              ElevatedButton(
+                onPressed: _controller.previousQuestion,
                 style: ElevatedButton.styleFrom(
-                  disabledForegroundColor: Colors.grey.withOpacity(0.38),
-                  disabledBackgroundColor: Colors.grey.withOpacity(0.12),
+                  backgroundColor: Colors.white10,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
-              )).animate().scale(duration: 200.ms, curve: Curves.easeInOut),
-
-          // Next/Submit button
-          Obx(() {
-            final isLastQuestion = _controller.isLastQuestion;
-            final currentQuestion = _controller.currentQuestion;
-            final questionAnswered = currentQuestion != null &&
-                (!currentQuestion.isRequired ||
-                    _controller.isQuestionAnswered(currentQuestion.id));
-
-            return ElevatedButton.icon(
-              onPressed: _controller.isSubmitting.value
-                  ? null
-                  : () {
-                      if (isLastQuestion) {
-                        // Validate all answers before submitting
-                        if (_formKey.currentState?.validate() ?? false) {
-                          _handleSubmit();
-                        }
-                      } else {
-                        // Move to the next question if this one is valid
-                        if (!currentQuestion!.isRequired ||
-                            questionAnswered ||
-                            (_formKey.currentState?.validate() ?? false)) {
-                          _controller.nextQuestion();
-                        }
-                      }
-                    },
-              icon: Icon(isLastQuestion ? Icons.check : Icons.arrow_forward),
-              label: Text(isLastQuestion
-                  ? AppConstants.submitButton
-                  : AppConstants.nextButton),
+                child: Text(
+                  'السابق',
+                  style: TextStyle(
+                    fontFamily: 'NotoKufiArabic',
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              )
+            else
+              SizedBox(width: 80),
+            
+            ElevatedButton(
+              onPressed: () {
+                if (_controller.currentQuestionIndex.value < _controller.totalQuestions - 1) {
+                  _controller.nextQuestion();
+                } else {
+                  _submitSurvey();
+                }
+              },
               style: ElevatedButton.styleFrom(
-                backgroundColor: isLastQuestion
-                    ? Colors.green
-                    : Color(0xFF007BFF), // Placeholder ADCDA color
-                foregroundColor: Colors.white,
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
+                elevation: 0,
+                padding: EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
-            ).animate().scale(duration: 200.ms, curve: Curves.easeInOut);
-          }),
-        ],
+              child: Text(
+                _controller.currentQuestionIndex.value < _controller.totalQuestions - 1 ? 'التالي' : 'إنهاء',
+                style: TextStyle(
+                  fontFamily: 'NotoKufiArabic',
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildCompletionScreen() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.check_circle,
-            size: 100,
-            color: Colors.green,
-          ),
-          SizedBox(height: 16),
-          Text(
-            'Survey Completed!',
-            style: TextStyle(fontSize: 24),
-          ),
-        ],
+    return Container(
+      color: Colors.black,
+      padding: EdgeInsets.all(24),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.check,
+                color: Colors.black,
+                size: 48,
+              ),
+            ),
+            SizedBox(height: 32),
+            Text(
+              'تم إرسال إجاباتك بنجاح',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                fontFamily: 'NotoKufiArabic',
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 16),
+            Text(
+              'شكراً لمشاركتك في الاستبيان',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.white54,
+                fontFamily: 'NotoKufiArabic',
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 40),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
+                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                'العودة إلى الرئيسية',
+                style: TextStyle(
+                  fontFamily: 'NotoKufiArabic',
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Future<void> _handleSubmit() async {
-    if (_formKey.currentState?.validate() ?? false) {
-      _formKey.currentState?.save();
-      final answers = _formKey.currentState?.value;
+    final answers = _controller.getAnswers();
 
-      // Show confirmation dialog
-      bool? confirmSubmit = await showDialog<bool>(
+    if (answers != null) {
+      final confirmSubmit = await showDialog<bool>(
         context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text("Confirm Submission"),
-            content: Text("Are you sure you want to submit the survey?"),
-            actions: <Widget>[
-              TextButton(
-                child: Text("Cancel"),
-                onPressed: () {
-                  Navigator.of(context).pop(false);
-                },
+        builder: (context) => AlertDialog(
+          backgroundColor: Color(0xFF1A1A1A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            'تأكيد إرسال',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontFamily: 'NotoKufiArabic',
+            ),
+            textAlign: TextAlign.right,
+          ),
+          content: Text(
+            'هل أنت متأكد من أنك تريد إرسال إجاباتك؟',
+            style: TextStyle(fontFamily: 'NotoKufiArabic'),
+            textAlign: TextAlign.right,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(
+                'إلغاء',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontFamily: 'NotoKufiArabic',
+                ),
               ),
-              ElevatedButton(
-                child: Text("Submit"),
-                onPressed: () {
-                  Navigator.of(context).pop(true);
-                },
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(
+                'إرسال',
+                style: TextStyle(fontFamily: 'NotoKufiArabic'),
               ),
-            ],
-          );
-        },
+            ),
+          ],
+        ),
       );
 
       if (confirmSubmit == true) {
-        _controller.submitSurvey(answers!);
+        _controller.submitSurvey();
       }
+    }
+  }
+
+  void _submitSurvey() {
+    if (_formKey.currentState?.saveAndValidate() ?? false) {
+      _controller.submitSurvey(
+        incidentId: widget.incidentId,
+        respondentId: widget.respondentId,
+        respondentEmail: widget.respondentEmail,
+      );
+    } else {
+      // Show validation error
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: Color(0xFF1A1A1A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            'تحقق من الإجابات',
+            style: TextStyle(
+              color: Colors.white,
+              fontFamily: 'NotoKufiArabic',
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          content: Text(
+            'يرجى التأكد من ملء جميع الحقول المطلوبة قبل الإرسال.',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.8),
+              fontFamily: 'NotoKufiArabic',
+            ),
+            textAlign: TextAlign.center,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'حسناً',
+                style: TextStyle(
+                  color: Color(0xFF004D90),
+                  fontFamily: 'NotoKufiArabic',
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
     }
   }
 }
