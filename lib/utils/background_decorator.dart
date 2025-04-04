@@ -45,7 +45,7 @@ class BackgroundDecorator {
 
   /// Dark pattern background with primary color base
   static BoxDecoration get primaryPatternDecoration => patternDecoration(
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.primaryColor,
         opacity: 0.15,
         borderRadius: 12.0,
       );

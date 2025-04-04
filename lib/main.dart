@@ -1,45 +1,105 @@
 import 'package:adcda_inspector/screens/home_screen.dart';
 import 'package:adcda_inspector/screens/login_screen.dart';
+import 'package:adcda_inspector/screens/survey_list_screen.dart';
 import 'package:adcda_inspector/utils/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:adcda_inspector/controllers/survey_controller.dart';
 import 'package:adcda_inspector/constants/app_constants.dart';
+import 'package:adcda_inspector/constants/app_colors.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
+import 'package:adcda_inspector/l10n/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:adcda_inspector/services/api_service.dart';
+import 'package:adcda_inspector/services/survey_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Create a fresh instance of the API service for each query to avoid caching issues
+  Get.lazyPut(() => ApiService(), fenix: true);
+  Get.lazyPut(() => SurveyService(), fenix: true);
+
   // Initialize controllers
   Get.put(SurveyController());
-  
-  runApp(const MyApp());
+
+  // Load default language from SharedPreferences
+  final prefs = await SharedPreferences.getInstance();
+  final defaultLanguageId =
+      prefs.getInt('languageId') ?? 1; // Default to Arabic (1)
+
+  runApp(MyApp(defaultLanguageId: defaultLanguageId));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final int defaultLanguageId;
+
+  const MyApp({super.key, required this.defaultLanguageId});
 
   @override
   Widget build(BuildContext context) {
+    // Set initial locale based on language ID
+    Locale initialLocale;
+    switch (defaultLanguageId) {
+      case 2:
+        initialLocale = const Locale('en');
+        break;
+      case 3:
+        initialLocale = const Locale('ur');
+        break;
+      case 1:
+      default:
+        initialLocale = const Locale('ar');
+        break;
+    }
+
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'ADCDA Inspector',
+
+      // Localization settings
+      locale: initialLocale,
+      supportedLocales: const [
+        Locale('ar'), // Arabic
+        Locale('en'), // English
+        Locale('ur'), // Urdu - We include it here to allow UI to show the option
+      ],
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        FormBuilderLocalizations.delegate,
+      ],
+      localeResolutionCallback: (locale, supportedLocales) {
+        // For FormBuilderValidators, we'll always use Arabic for Urdu locale
+        // This prevents the warning message about missing Urdu support
+        if (locale?.languageCode == 'ur') {
+          // Use Arabic localization for form validation
+          // but keep Urdu for the rest of the app
+          return const Locale('ar');
+        }
+        return locale;
+      },
+      fallbackLocale: const Locale('ar'), // Arabic as fallback
       theme: ThemeData(
-        scaffoldBackgroundColor: Colors.black,
+        scaffoldBackgroundColor: AppColors.backgroundColor,
         appBarTheme: AppBarTheme(
-          backgroundColor: Colors.black,
+          backgroundColor: AppColors.primaryColor,
           elevation: 0,
-          iconTheme: IconThemeData(color: Colors.white),
+          iconTheme: IconThemeData(color: AppColors.whiteColor),
           titleTextStyle: TextStyle(
-            color: Colors.white,
-            fontSize: 18, 
+            color: AppColors.whiteColor,
+            fontSize: 18,
             fontWeight: FontWeight.w600,
             fontFamily: 'NotoKufiArabic',
           ),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.black,
+            backgroundColor: AppColors.buttonColor,
+            foregroundColor: AppColors.buttonTextColor,
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
@@ -47,39 +107,31 @@ class MyApp extends StatelessWidget {
           ),
         ),
         textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(
-            foregroundColor: Colors.white,
-          ),
+          style: TextButton.styleFrom(foregroundColor: AppColors.whiteColor),
         ),
         colorScheme: ColorScheme.dark(
-          primary: Colors.white,
-          onPrimary: Colors.black,
-          secondary: Colors.white,
-          surface: Colors.black,
+          primary: AppColors.primaryColor,
+          onPrimary: AppColors.whiteColor,
+          secondary: AppColors.secondaryColor,
+          surface: AppColors.surfaceColor,
         ),
         textTheme: TextTheme(
-          bodyMedium: TextStyle(
-            fontFamily: 'NotoKufiArabic',
-          ),
+          bodyMedium: TextStyle(fontFamily: 'NotoKufiArabic'),
         ),
       ),
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        FormBuilderLocalizations.delegate,
-      ],
-      supportedLocales: const [
-        Locale('ar', 'AE'), // Arabic
-        Locale('en', 'US'), // English
-      ],
-      locale: const Locale('ar', 'AE'), // Default to Arabic
-      fallbackLocale: const Locale('en', 'US'),
       textDirection: AppConstants.appTextDirection,
       home: Directionality(
         textDirection: AppConstants.appTextDirection,
         child: const LoginScreen(),
       ),
+      getPages: [
+        GetPage(name: '/login', page: () => const LoginScreen()),
+        GetPage(name: '/home', page: () => const HomeScreen()),
+        GetPage(
+          name: '/surveys',
+          page: () => SurveyListScreen(defaultLanguageId: defaultLanguageId),
+        ),
+      ],
     );
   }
 }

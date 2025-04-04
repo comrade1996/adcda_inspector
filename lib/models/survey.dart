@@ -19,7 +19,8 @@ class Survey {
       id: json['id'] as int,
       name: json['name'] as String?,
       description: json['description'] as String?,
-      questions: (json['questions'] as List<dynamic>?)
+      questions:
+          (json['questions'] as List<dynamic>?)
               ?.map((e) => SurveyQuestion.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
@@ -48,7 +49,7 @@ class SurveyQuestion {
   final List<SurveyAnswer> answers;
   final String? validationRegex;
   final String? validationMessage;
-  
+
   // New properties to support UI enhancements
   final List<ValidValue>? validValues;
   final OptionsOrientation? orientation;
@@ -80,23 +81,30 @@ class SurveyQuestion {
       id: json['id'] as int,
       question: json['question'] as String?,
       helpText: json['helpText'] as String?,
-      questionType: QuestionType.fromInt(json['questionType'] as int),
+      questionType:
+          json['questionType'] is int
+              ? QuestionTypeExtension.fromInt(json['questionType'] as int)
+              : QuestionTypeExtension.fromString(
+                json['questionType'].toString(),
+              ),
       isRequired: json['isRequired'] as bool? ?? false,
       allowMultipleAnswers: json['allowMultipleAnswers'] as bool? ?? false,
       sortOrder: json['sortOrder'] as int? ?? 0,
-      answers: (json['answers'] as List<dynamic>?)
+      answers:
+          (json['answers'] as List<dynamic>?)
               ?.map((e) => SurveyAnswer.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
       validationRegex: json['validationRegex'] as String?,
       validationMessage: json['validationMessage'] as String?,
-      validValues: (json['validValues'] as List<dynamic>?)
+      validValues:
+          (json['validValues'] as List<dynamic>?)
               ?.map((e) => ValidValue.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          null,
-      orientation: json['orientation'] == null
-          ? null
-          : OptionsOrientation.values[json['orientation'] as int],
+              .toList(),
+      orientation:
+          json['orientation'] == 'horizontal'
+              ? OptionsOrientation.horizontal
+              : OptionsOrientation.vertical,
       placeholder: json['placeholder'] as String?,
       multiline: json['multiline'] as bool?,
     );
@@ -107,15 +115,18 @@ class SurveyQuestion {
       'id': id,
       'question': question,
       'helpText': helpText,
-      'questionType': questionType.value,
+      'questionType': questionType.name,
       'isRequired': isRequired,
       'allowMultipleAnswers': allowMultipleAnswers,
       'sortOrder': sortOrder,
       'answers': answers.map((e) => e.toJson()).toList(),
       'validationRegex': validationRegex,
       'validationMessage': validationMessage,
-      'validValues': validValues?.map((e) => e.toJson()).toList() ?? null,
-      'orientation': orientation?.index,
+      'validValues': validValues?.map((e) => e.toJson()).toList(),
+      'orientation':
+          orientation == OptionsOrientation.horizontal
+              ? 'horizontal'
+              : 'vertical',
       'placeholder': placeholder,
       'multiline': multiline,
     };
@@ -163,10 +174,7 @@ class ValidValue {
   final String? value;
   final String? text;
 
-  ValidValue({
-    this.value,
-    this.text,
-  });
+  ValidValue({this.value, this.text});
 
   factory ValidValue.fromJson(Map<String, dynamic> json) {
     return ValidValue(
@@ -176,10 +184,7 @@ class ValidValue {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'value': value,
-      'text': text,
-    };
+    return {'value': value, 'text': text};
   }
 }
 

@@ -6,20 +6,26 @@ class SurveySubmit {
   final String? respondentEmail;
   final int languageId;
   final List<SurveySubmitAnswer> answers;
+  final double? latitude;
+  final double? longitude;
+  final String? deviceType;
 
   SurveySubmit({
     required this.surveyId,
-    required this.incidentId,
+    this.incidentId = 0,
     this.respondentId,
     this.respondentEmail,
     required this.languageId,
     this.answers = const [],
+    this.latitude,
+    this.longitude,
+    this.deviceType,
   });
 
   factory SurveySubmit.fromJson(Map<String, dynamic> json) {
     return SurveySubmit(
       surveyId: json['surveyId'] as int,
-      incidentId: json['incidentId'] as int,
+      incidentId: json['incidentId'] as int? ?? 0,
       respondentId: json['respondentId'] as int?,
       respondentEmail: json['respondentEmail'] as String?,
       languageId: json['languageId'] as int,
@@ -27,18 +33,41 @@ class SurveySubmit {
               ?.map((e) => SurveySubmitAnswer.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
+      latitude: json['latitude'] as double?,
+      longitude: json['longitude'] as double?,
+      deviceType: json['deviceType'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
+    final json = <String, dynamic>{
       'surveyId': surveyId,
       'incidentId': incidentId,
-      'respondentId': respondentId,
-      'respondentEmail': respondentEmail,
       'languageId': languageId,
       'answers': answers.map((e) => e.toJson()).toList(),
     };
+    
+    if (respondentId != null) {
+      json['respondentId'] = respondentId;
+    }
+    
+    if (respondentEmail != null) {
+      json['respondentEmail'] = respondentEmail;
+    }
+    
+    if (latitude != null) {
+      json['latitude'] = latitude;
+    }
+    
+    if (longitude != null) {
+      json['longitude'] = longitude;
+    }
+    
+    if (deviceType != null) {
+      json['deviceType'] = deviceType;
+    }
+    
+    return json;
   }
 }
 

@@ -1,11 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:adcda_inspector/utils/api_config.dart';
 
 /// Application-wide constants to avoid magic strings
 class AppConstants {
-  // API endpoints
-  static const String baseUrl = 'https://api.adcda.gov.ae';
-  static const String surveyEndpoint = '/surveys';
-  static const String submitEndpoint = '/submit';
+  // API constants - use ApiConfig class instead of direct URLs
+  static String get baseApiUrl => ApiConfig.baseUrl;
+  
+  // API Endpoints - using the centralized ApiConfig
+  static String get surveyEndpoint => ApiConfig.surveysEndpoint;
+  static String get surveyDetailEndpoint => ApiConfig.surveysEndpoint;
+  static String get submitEndpoint => ApiConfig.surveySubmissionsEndpoint;
+  static String get startSurveyEndpoint => ApiConfig.startSurveyEndpoint;
+  static String get aliveEndpoint => ApiConfig.aliveEndpoint;
+  static String get healthEndpoint => ApiConfig.healthEndpoint;
+  
+  // Auth endpoints
+  static String get loginEndpoint => ApiConfig.loginEndpoint;
+  static String get refreshTokenEndpoint => ApiConfig.refreshTokenEndpoint;
+
+  // Language IDs
+  static const int arabicLanguageId = 1;
+  static const int englishLanguageId = 2;
+  static const int urduLanguageId = 3;
+  static const int defaultLanguageId = arabicLanguageId;
 
   // Error messages
   static const String networkError =
@@ -15,14 +32,12 @@ class AppConstants {
       'Please check your input and try again.';
   static const String submittingText = 'Submitting...';
   static const String backButton = 'Back';
+  static const String requiredField = 'هذا الحقل مطلوب';
   
   // Default values
-  static const int defaultLanguageId = 2; // English
-  static const int arabicLanguageId = 1;
-  static const int urduLanguageId = 3;
+  static const int defaultSurveyId = 6;   // Default survey ID
 
   // Validation messages
-  static const String requiredField = 'This field is required';
   static const String invalidEmail = 'Please enter a valid email address';
   static const String invalidNumber = 'Please enter a valid number';
   static const String invalidDate = 'Please enter a valid date';
@@ -33,8 +48,7 @@ class AppConstants {
   static const String nextButton = 'Next';
   static const String previousButton = 'Previous';
   static const String loadingText = 'Loading...';
-  static const String surveyCompleteText =
-      'Thank you for completing the survey!';
+  static const String surveyCompleteText = 'Survey completed successfully!';
   static const String backToHomeButton = 'Back to Home';
   static const String surveyScreenTitle = 'نموذج تقييم جاهزية مراكز الدفاع المدني';
 
@@ -47,6 +61,8 @@ class AppConstants {
   static const String surveyDataKey = 'survey_data';
   static const String languageKey = 'selected_language';
   static const String userDataKey = 'user_data';
+  static const String tokenKey = 'auth_token';
+  static const String refreshTokenKey = 'refresh_token';
 
   // Animation durations
   static const int shortAnimationDuration = 200; // milliseconds
