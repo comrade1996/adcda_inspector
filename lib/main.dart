@@ -5,6 +5,7 @@ import 'package:adcda_inspector/utils/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:adcda_inspector/controllers/survey_controller.dart';
+import 'package:adcda_inspector/controllers/auth_controller.dart';
 import 'package:adcda_inspector/constants/app_constants.dart';
 import 'package:adcda_inspector/constants/app_colors.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -13,6 +14,7 @@ import 'package:adcda_inspector/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:adcda_inspector/services/api_service.dart';
 import 'package:adcda_inspector/services/survey_service.dart';
+import 'package:adcda_inspector/services/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,9 +22,14 @@ void main() async {
   // Create a fresh instance of the API service for each query to avoid caching issues
   Get.lazyPut(() => ApiService(), fenix: true);
   Get.lazyPut(() => SurveyService(), fenix: true);
+  Get.lazyPut(() => AuthService(), fenix: true);
 
   // Initialize controllers
   Get.put(SurveyController());
+  
+  // Initialize auth controller
+  final authController = Get.put(AuthController());
+  await authController.initAuth();
 
   // Load default language from SharedPreferences
   final prefs = await SharedPreferences.getInstance();
@@ -39,6 +46,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get the auth controller
+    final authController = Get.find<AuthController>();
+    
     // Set initial locale based on language ID
     Locale initialLocale;
     switch (defaultLanguageId) {
@@ -120,18 +130,57 @@ class MyApp extends StatelessWidget {
         ),
       ),
       textDirection: AppConstants.appTextDirection,
-      home: Directionality(
-        textDirection: AppConstants.appTextDirection,
-        child: const LoginScreen(),
-      ),
+      
+      // Auth-aware home page
+      home: Obx(() {
+        return authController.isInitialized.value
+            ? authController.isAuthenticated.value
+                ? Directionality(
+                    textDirection: AppConstants.appTextDirection,
+                    child: const HomeScreen(),
+                  )
+                : Directionality(
+                    textDirection: AppConstants.appTextDirection,
+                    child: const LoginScreen(),
+                  )
+            : Directionality(
+                textDirection: AppConstants.appTextDirection,
+                child: const Scaffold(
+                  body: Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+              );
+      }),
+      
       getPages: [
         GetPage(name: '/login', page: () => const LoginScreen()),
-        GetPage(name: '/home', page: () => const HomeScreen()),
+        GetPage(
+          name: '/home', 
+          page: () => const HomeScreen(),
+          middlewares: [
+            RouteGuard(),
+          ],
+        ),
         GetPage(
           name: '/surveys',
           page: () => SurveyListScreen(defaultLanguageId: defaultLanguageId),
+          middlewares: [
+            RouteGuard(),
+          ],
         ),
       ],
     );
+  }
+}
+
+// Route guard middleware to check authentication
+class RouteGuard extends GetMiddleware {
+  @override
+  RouteSettings? redirect(String? route) {
+    final authController = Get.find<AuthController>();
+    return authController.isAuthenticated.value 
+        ? null 
+        : const RouteSettings(name: '/login');
   }
 }

@@ -49,11 +49,16 @@
   "surveySubmittedSuccessfully": "سروے کامیابی سے جمع کرا دیا گیا ہے",
   "alreadySubmitted": "یہ سروے پہلے ہی جمع کرایا جا چکا ہے",
   "requiredField": "یہ فیلڈ درکار ہے",
-  "validationError": "براہ کرم جمع کرانے سے پہلے سبھی ضروری سوالات کا جواب دیں",
-  "noAnswer": "کوئی جواب نہیں دیا گیا",
-  "answerPreview": "جوابات کا پیش منظر",
-  "answersPreview": "جوابات کا پیش منظر",
+  "loadingText": "لوڈ ہو رہا ہے...",
+  "answersPreview": "جوابات کا پیش نظارہ",
   "startSurvey": "سروے شروع کریں",
   "noQuestionsAvailable": "کوئی سوالات دستیاب نہیں ہیں",
-  "stars": "ستارے"
+  "stars": "ستارے",
+  "loginScreenTitle": "لاگ ان",
+  "usernameOrEmail": "صارف نام/ای میل",
+  "password": "پاس ورڈ",
+  "login": "لاگ ان کریں",
+  "loginWithBiometrics": "بایو میٹرکس سے لاگ ان کریں",
+  "loginFailed": "لاگ ان ناکام ہو گیا",
+  "biometricLoginFailed": "بایو میٹرک لاگ ان ناکام ہو گیا"
 }

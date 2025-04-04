@@ -10,10 +10,14 @@ import 'package:adcda_inspector/models/start_survey_request.dart' as start_reque
 import 'package:adcda_inspector/services/api_service.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:adcda_inspector/utils/api_config.dart';
+import 'package:get/get.dart';
 
 /// Service for handling survey-related API operations and data loading
-class SurveyService {
+class SurveyService extends GetxService {
   final ApiService _apiService;
+  
+  // Observable error message for UI display
+  final RxString errorMessage = ''.obs;
 
   SurveyService({ApiService? apiService})
       : _apiService = apiService ?? ApiService();
@@ -21,6 +25,7 @@ class SurveyService {
   /// Fetch all available surveys
   Future<List<dto.SurveyDTO>> fetchAllSurveys({int languageId = AppConstants.defaultLanguageId}) async {
     try {
+      errorMessage.value = '';
       // Make sure the languageId is explicitly passed as a query parameter
       final String endpoint = ApiConfig.surveysEndpoint;
       print('GET Request to: $endpoint?languageId=$languageId');
@@ -30,38 +35,41 @@ class SurveyService {
         queryParams: {'languageId': languageId},
       );
       
-      // Add extra logging for debugging Urdu responses
-      if (languageId == AppConstants.urduLanguageId) {
-        print('Urdu language response type: ${response.runtimeType}');
-        print('Urdu language response content: $response');
-      }
-      
-      if (response == null) {
-        print('Received null response from API, returning empty list');
-        return [];
-      } else if (response is List) {
-        return response.map((item) => dto.SurveyDTO.fromJson(item ?? {})).toList();
-      } else if (response is Map) {
-        if (response['data'] is List) {
-          return (response['data'] as List).map((item) => dto.SurveyDTO.fromJson(item ?? {})).toList();
-        } else if (response['data'] == null) {
-          // Handle case when data is null
-          print('Response data field is null, returning empty list');
+      // Check for wrapped API response format
+      if (response is Map<String, dynamic>) {
+        // Check for success flag
+        if (response['success'] == true) {
+          if (response['data'] is List) {
+            return (response['data'] as List).map((item) => dto.SurveyDTO.fromJson(item ?? {})).toList();
+          } else if (response['data'] == null) {
+            print('Response data field is null, returning empty list');
+            return [];
+          }
+        } else {
+          // Handle error case
+          errorMessage.value = response['message'] ?? 'Failed to fetch surveys';
+          print('API error: ${errorMessage.value}');
           return [];
         }
+      } 
+      // Fallback for legacy response format
+      else if (response is List) {
+        return response.map((item) => dto.SurveyDTO.fromJson(item ?? {})).toList();
       }
       
       print('Could not parse survey response, returning empty list');
       return [];
     } catch (e) {
+      errorMessage.value = e.toString();
       print('Error in fetchAllSurveys: $e');
-      throw Exception('Error fetching surveys: $e');
+      return [];
     }
   }
 
   /// Fetch detailed survey by ID
-  Future<Survey> fetchSurvey(int surveyId, {int languageId = AppConstants.defaultLanguageId}) async {
+  Future<Survey?> fetchSurvey(int surveyId, {int languageId = AppConstants.defaultLanguageId}) async {
     try {
+      errorMessage.value = '';
       // Make sure the languageId is explicitly passed as a query parameter
       final String endpoint = ApiConfig.getSurveyDetailEndpoint(surveyId);
       print('GET Request to: $endpoint?languageId=$languageId');
@@ -71,30 +79,44 @@ class SurveyService {
         queryParams: {'languageId': languageId},
       );
       
-      // Add extra logging for debugging Urdu responses
-      if (languageId == AppConstants.urduLanguageId) {
-        print('Urdu language survey response type: ${response.runtimeType}');
-        print('Urdu language survey response content: $response');
-      }
-      
-      if (response == null) {
-        throw Exception('Received null response from API');
-      } else if (response is Map<String, dynamic>) {
-        return _convertApiResponseToSurvey(response);
+      // Check for wrapped API response format
+      if (response is Map<String, dynamic>) {
+        // Check for success flag
+        if (response.containsKey('success') && response.containsKey('data')) {
+          if (response['success'] == true) {
+            if (response['data'] != null) {
+              return _convertApiResponseToSurvey(response['data']);
+            } else {
+              errorMessage.value = 'Survey data is empty';
+              return null;
+            }
+          } else {
+            // Handle error case
+            errorMessage.value = response['message'] ?? 'Failed to fetch survey';
+            print('API error: ${errorMessage.value}');
+            return null;
+          }
+        } else {
+          // Legacy format or direct data response
+          return _convertApiResponseToSurvey(response);
+        }
       } else if (response is String) {
         try {
           final jsonData = json.decode(response);
           return _convertApiResponseToSurvey(jsonData);
         } catch (e) {
+          errorMessage.value = 'Invalid response format';
           print('Error decoding response string: $e');
-          throw Exception('Invalid response format: $e');
+          return null;
         }
       }
       
-      throw Exception('Unexpected response format from API');
+      errorMessage.value = 'Unexpected response format from API';
+      return null;
     } catch (e) {
+      errorMessage.value = e.toString();
       print('Error in fetchSurvey: $e');
-      throw Exception('Error fetching survey: $e');
+      return null;
     }
   }
   
@@ -177,6 +199,7 @@ class SurveyService {
       final jsonData = json.decode(jsonString);
       return Survey.fromJson(jsonData);
     } catch (e) {
+      errorMessage.value = 'Error loading local survey data';
       // Create a default survey with sample data if local JSON also fails
       return Survey(
         id: 1,
@@ -207,6 +230,7 @@ class SurveyService {
   /// Start a new survey submission
   Future<String?> startSurvey(start_request.StartSurveyRequest request) async {
     try {
+      errorMessage.value = '';
       print('Starting new survey submission: ${request.toJson()}');
       final response = await _apiService.post(
         ApiConfig.startSurveyEndpoint,
@@ -214,32 +238,63 @@ class SurveyService {
       );
 
       if (response == null) {
-        print('Received null response from startSurvey API');
+        errorMessage.value = 'Received null response from server';
         return null;
       }
 
       print('Start survey response: $response');
       
-      // Response format should be { "submissionGuid": "guid" } or similar
+      // Check for wrapped API response format
       if (response is Map<String, dynamic>) {
-        if (response.containsKey('submissionGuid')) {
+        if (response.containsKey('success')) {
+          if (response['success'] == true) {
+            // Modern API wrapper format
+            if (response['data'] != null) {
+              var data = response['data'];
+              
+              // Try to find the GUID in the response data
+              if (data is Map<String, dynamic>) {
+                if (data.containsKey('submissionGuid')) {
+                  return data['submissionGuid'];
+                }
+                if (data.containsKey('SubmissionGuid')) {
+                  return data['SubmissionGuid'];
+                }
+                if (data.containsKey('guid')) {
+                  return data['guid'];
+                }
+                // If there's only one key-value pair, assume it's the GUID
+                if (data.length == 1) {
+                  return data.values.first?.toString();
+                }
+              } else if (data is String) {
+                // If data is directly a string, it might be the GUID
+                return data;
+              }
+            } else {
+              errorMessage.value = 'Response data field is null';
+            }
+          } else {
+            // API returned an error
+            errorMessage.value = response['message'] ?? 'Failed to start survey';
+            print('API error: ${errorMessage.value}');
+          }
+        }
+        // Legacy format or direct response
+        else if (response.containsKey('submissionGuid')) {
           return response['submissionGuid'];
-        }
-        
-        // Try alternate key names that might be used
-        if (response.containsKey('SubmissionGuid')) {
+        } else if (response.containsKey('SubmissionGuid')) {
           return response['SubmissionGuid'];
-        }
-        
-        // If there's only one key-value pair, assume it's the GUID
-        if (response.length == 1) {
+        } else if (response.length == 1) {
           return response.values.first?.toString();
         }
       }
       
+      errorMessage.value = 'Could not extract submission GUID from response';
       print('Could not extract submission GUID from response: $response');
       return null;
     } catch (e) {
+      errorMessage.value = e.toString();
       print('Error starting survey: $e');
       return null;
     }
@@ -248,6 +303,7 @@ class SurveyService {
   /// Submit a survey with answers
   Future<bool> submitSurveyWithGuid(String guid, SurveySubmit submit) async {
     try {
+      errorMessage.value = '';
       print('Submitting survey with GUID: $guid');
       print('Submission data: ${json.encode(submit.toJson())}');
       
@@ -259,13 +315,26 @@ class SurveyService {
       print('Survey submission response: $response');
       
       if (response == null) {
-        print('Received null response from submitSurveyWithGuid API');
+        errorMessage.value = 'Received null response from server';
         return false;
       }
       
-      // Consider any non-error response as success
+      // Check for wrapped API response format
+      if (response is Map<String, dynamic> && response.containsKey('success')) {
+        if (response['success'] == true) {
+          return true;
+        } else {
+          // API returned an error
+          errorMessage.value = response['message'] ?? 'Failed to submit survey';
+          print('API error: ${errorMessage.value}');
+          return false;
+        }
+      }
+      
+      // Consider any non-error response as success for backwards compatibility
       return true;
     } catch (e) {
+      errorMessage.value = e.toString();
       print('Error submitting survey: $e');
       return false;
     }
@@ -274,16 +343,37 @@ class SurveyService {
   /// Get survey submission details
   Future<Survey?> getSurveySubmission(String guid, {int languageId = 1}) async {
     try {
+      errorMessage.value = '';
       final response = await _apiService.get(
         '${ApiConfig.baseUrl}/SurveySubmissions/$guid',
         queryParams: {'languageId': languageId},
       );
 
-      if (response.statusCode == 200) {
-        return Survey.fromJson(response.data);
+      // Check for wrapped API response format
+      if (response is Map<String, dynamic> && response.containsKey('success')) {
+        if (response['success'] == true) {
+          if (response['data'] != null) {
+            return Survey.fromJson(response['data']);
+          } else {
+            errorMessage.value = 'Response data field is null';
+            return null;
+          }
+        } else {
+          // API returned an error
+          errorMessage.value = response['message'] ?? 'Failed to get survey submission';
+          print('API error: ${errorMessage.value}');
+          return null;
+        }
+      } 
+      // Legacy response format
+      else if (response is Map<String, dynamic>) {
+        return Survey.fromJson(response);
       }
+      
+      errorMessage.value = 'Invalid response format from server';
       return null;
     } catch (e) {
+      errorMessage.value = e.toString();
       print('Error getting survey submission: $e');
       return null;
     }
@@ -291,14 +381,22 @@ class SurveyService {
 
   /// Fetch mock survey for testing and development
   Future<Survey> fetchMockSurvey() async {
-    final String surveyJson = await rootBundle.loadString('assets/data/mock_survey.json');
-    final Map<String, dynamic> surveyData = json.decode(surveyJson);
-    return Survey.fromJson(surveyData);
+    try {
+      final String surveyJson = await rootBundle.loadString('assets/data/mock_survey.json');
+      final Map<String, dynamic> surveyData = json.decode(surveyJson);
+      return Survey.fromJson(surveyData);
+    } catch (e) {
+      errorMessage.value = 'Error loading mock survey data';
+      print('Error loading mock survey: $e');
+      // Return empty survey on error
+      return Survey(id: 0, name: '', description: '', questions: []);
+    }
   }
 
   /// Submit survey answers
   Future<bool> submitSurvey(Map<String, dynamic> submitData) async {
     try {
+      errorMessage.value = '';
       final String endpoint = ApiConfig.submitEndpoint;
       print('POST Request to: $endpoint');
       print('Survey data: ${json.encode(submitData)}');
@@ -308,13 +406,22 @@ class SurveyService {
         data: submitData,
       );
       
-      if (response is Map && response.containsKey('success')) {
-        return response['success'] == true;
+      // Check for wrapped API response format
+      if (response is Map<String, dynamic> && response.containsKey('success')) {
+        if (response['success'] == true) {
+          return true;
+        } else {
+          // API returned an error
+          errorMessage.value = response['message'] ?? 'Failed to submit survey';
+          print('API error: ${errorMessage.value}');
+          return false;
+        }
       }
       
-      // Consider it successful if we don't get an explicit error
+      // Consider it successful if we don't get an explicit error for backwards compatibility
       return true;
     } catch (e) {
+      errorMessage.value = e.toString();
       print('Error in submitSurvey: $e');
       return false;
     }
@@ -327,6 +434,7 @@ class SurveyService {
     }
     
     try {
+      errorMessage.value = '';
       final String endpoint = ApiConfig.checkSubmissionEndpoint;
       print('GET Request to: $endpoint?surveyId=$surveyId&respondentId=$respondentId');
       
@@ -338,7 +446,29 @@ class SurveyService {
         },
       );
       
-      if (response is bool) {
+      // Check for wrapped API response format
+      if (response is Map<String, dynamic> && response.containsKey('success')) {
+        if (response['success'] == true) {
+          if (response['data'] is bool) {
+            return response['data'];
+          } else if (response['data'] is Map) {
+            final data = response['data'] as Map;
+            if (data.containsKey('submitted')) {
+              return data['submitted'] == true;
+            } else if (data.containsKey('exists')) {
+              return data['exists'] == true;
+            }
+          }
+          return false;
+        } else {
+          // API returned an error
+          errorMessage.value = response['message'] ?? 'Failed to check survey submission';
+          print('API error: ${errorMessage.value}');
+          return false;
+        }
+      } 
+      // Legacy response formats
+      else if (response is bool) {
         return response;
       } else if (response is Map) {
         if (response.containsKey('data') && response['data'] is bool) {
@@ -352,6 +482,7 @@ class SurveyService {
       
       return false;
     } catch (e) {
+      errorMessage.value = e.toString();
       print('Error in checkSurveySubmission: $e');
       return false;
     }
@@ -360,21 +491,44 @@ class SurveyService {
   /// Get all submissions for a specific survey
   Future<List<dto.SurveySubmissionDTO>> getSurveySubmissions(int surveyId) async {
     try {
+      errorMessage.value = '';
       final String endpoint = ApiConfig.getSubmissionsBySurveyEndpoint(surveyId);
       print('GET Request to: $endpoint');
       
       final response = await _apiService.get(endpoint);
       
-      if (response is List) {
+      // Check for wrapped API response format
+      if (response is Map<String, dynamic> && response.containsKey('success')) {
+        if (response['success'] == true) {
+          if (response['data'] is List) {
+            return (response['data'] as List).map((item) => dto.SurveySubmissionDTO.fromJson(item)).toList();
+          } else {
+            errorMessage.value = 'Response data is not a list';
+            return [];
+          }
+        } else {
+          // API returned an error
+          errorMessage.value = response['message'] ?? 'Failed to get survey submissions';
+          print('API error: ${errorMessage.value}');
+          return [];
+        }
+      } 
+      // Legacy response formats
+      else if (response is List) {
         return response.map((item) => dto.SurveySubmissionDTO.fromJson(item)).toList();
-      } else if (response is Map && response['data'] is List) {
-        return (response['data'] as List).map((item) => dto.SurveySubmissionDTO.fromJson(item)).toList();
       }
       
+      errorMessage.value = 'Invalid response format from server';
       return [];
     } catch (e) {
+      errorMessage.value = e.toString();
       print('Error in getSurveySubmissions: $e');
       return [];
     }
+  }
+  
+  /// Clear current error message
+  void clearError() {
+    errorMessage.value = '';
   }
 }

@@ -55,6 +55,10 @@ dependencies:
   lottie: ^2.6.0
   flutter_animate: ^4.2.0+1
   flutter_boxicons: ^3.0.0
+  
+  # Authentication and security
+  flutter_secure_storage: ^9.0.0
+  local_auth: ^2.1.7
 
   # Form and validation
   flutter_form_builder: ^10.0.1

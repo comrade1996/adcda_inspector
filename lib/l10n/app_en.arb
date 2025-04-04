@@ -50,5 +50,13 @@
   "alreadySubmitted": "This survey has already been submitted",
   "previewAnswers": "Preview Answers",
   "answersPreview": "Answers Preview",
-  "startSurvey": "Start Survey"
+  "startSurvey": "Start Survey",
+  
+  "loginScreenTitle": "Login",
+  "usernameOrEmail": "Username/Email",
+  "password": "Password",
+  "login": "Login",
+  "loginWithBiometrics": "Login with Biometrics",
+  "loginFailed": "Login Failed",
+  "biometricLoginFailed": "Biometric Login Failed"
 }

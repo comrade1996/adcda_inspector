@@ -50,5 +50,12 @@
   "alreadySubmitted": "تم إرسال هذا الاستبيان مسبقاً",
   "previewAnswers": "معاينة الإجابات",
   "answersPreview": "معاينة الإجابات",
-  "startSurvey": "ابدأ الاستبيان"
+  "startSurvey": "ابدأ الاستبيان",
+  "loginScreenTitle": "تسجيل الدخول",
+  "usernameOrEmail": "اسم المستخدم/البريد الإلكتروني",
+  "password": "كلمة المرور",
+  "login": "تسجيل الدخول",
+  "loginWithBiometrics": "تسجيل الدخول باستخدام البصمة",
+  "loginFailed": "فشل تسجيل الدخول",
+  "biometricLoginFailed": "فشل تسجيل الدخول باستخدام البصمة"
 }

@@ -25,11 +25,20 @@ class ApiConfig {
   static String get startSurveyEndpoint => '$baseUrl$_surveySubmissionsPath/start';
   static String get aliveEndpoint => '$baseUrl$_alivePath';
   static String get healthEndpoint => '$baseUrl$_alivePath/health';
+  
+  // Auth endpoints
   static String get loginEndpoint => '$baseUrl$_authPath/login';
   static String get refreshTokenEndpoint => '$baseUrl$_authPath/refresh-token';
+  static String get revokeTokenEndpoint => '$baseUrl$_authPath/revoke-token';
+  static String get registerEndpoint => '$baseUrl$_authPath/register/customer';
+  static String get verifyEmailEndpoint => '$baseUrl$_authPath/verify-email';
+  static String get verifyPhoneEndpoint => '$baseUrl$_authPath/verify-phone';
   
   // Utility method to get survey detail endpoint for a specific survey ID
-  static String getSurveyDetailEndpoint(int surveyId) => '$surveysEndpoint/$surveyId';
+  static String getSurveyDetailEndpoint(int surveyId, {int? languageId}) => 
+      languageId != null 
+          ? '$surveysEndpoint/$surveyId?languageId=$languageId' 
+          : '$surveysEndpoint/$surveyId';
   
   // Utility method to get submission endpoint for a specific GUID
   static String getSubmissionEndpoint(String guid) => '$surveySubmissionsEndpoint/$guid';

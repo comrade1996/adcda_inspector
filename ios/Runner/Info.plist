@@ -30,6 +30,8 @@
 	<string>تحتاج ADCDA Inspector إلى الوصول إلى موقعك الحالي لإكمال الاستبيان</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>تحتاج ADCDA Inspector إلى الوصول إلى موقعك الحالي لإكمال الاستبيان</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>To authenticate and login securely using biometrics</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
