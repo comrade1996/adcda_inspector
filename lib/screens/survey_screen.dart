@@ -52,7 +52,9 @@ class _SurveyScreenState extends State<SurveyScreen> {
     });
 
     try {
-      print('Loading survey ID: ${widget.surveyId} with language ID: $_currentLanguageId');
+      print(
+        'Loading survey ID: ${widget.surveyId} with language ID: $_currentLanguageId',
+      );
       await _controller.loadSurvey(widget.surveyId, _currentLanguageId);
       setState(() {
         _isLoading = false;
@@ -67,25 +69,27 @@ class _SurveyScreenState extends State<SurveyScreen> {
   }
 
   Future<void> _changeLanguage(int languageId) async {
-    print('SurveyScreen: Changing language to ID: $languageId from $_currentLanguageId');
-    
+    print(
+      'SurveyScreen: Changing language to ID: $languageId from $_currentLanguageId',
+    );
+
     // Only proceed if the language is actually changing
     if (languageId == _currentLanguageId) {
       print('Language ID is the same, no change needed');
       return;
     }
-    
+
     // Update UI immediately
     setState(() {
       _currentLanguageId = languageId;
       _isLoading = true; // Show loading indicator right away
     });
-    
+
     // Save the selected language as default
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('languageId', languageId);
     print('Saved language ID $languageId to preferences');
-    
+
     // Set the appropriate locale
     Locale newLocale;
     switch (languageId) {
@@ -101,20 +105,22 @@ class _SurveyScreenState extends State<SurveyScreen> {
         newLocale = const Locale('ar');
         break;
     }
-    
+
     print('Updating app locale to $newLocale');
     // Update app locale
     Get.updateLocale(newLocale);
-    
+
     // Reset form and answers before loading new survey
     _formKey.currentState?.reset();
     _controller.resetSurveyState();
-    
+
     // Add a small delay to ensure locale changes take effect
     await Future.delayed(Duration(milliseconds: 500));
-    
+
     try {
-      print('Loading survey ID: ${widget.surveyId} with language ID: $_currentLanguageId');
+      print(
+        'Loading survey ID: ${widget.surveyId} with language ID: $_currentLanguageId',
+      );
       await _controller.loadSurvey(widget.surveyId, _currentLanguageId);
       setState(() {
         _isLoading = false;
@@ -127,11 +133,13 @@ class _SurveyScreenState extends State<SurveyScreen> {
         _hasError = true;
       });
       print('Error loading survey after language change: $e');
-      
+
       // Show error message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('حدث خطأ أثناء تحميل الاستبيان. يرجى المحاولة مرة أخرى'),
+          content: Text(
+            'حدث خطأ أثناء تحميل الاستبيان. يرجى المحاولة مرة أخرى',
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -149,19 +157,25 @@ class _SurveyScreenState extends State<SurveyScreen> {
           elevation: 0,
           centerTitle: false,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: AppColors.primaryColor, size: 22),
+            icon: Icon(
+              Icons.arrow_back,
+              color: AppColors.primaryColor,
+              size: 22,
+            ),
             onPressed: () => Navigator.of(context).pop(),
           ),
-          title: Obx(() => Text(
-            _controller.survey.value?.name ?? AppLocalizations.of(context).translate('surveyTitle') ?? 'Survey',
-            style: AppTheme.headingMedium,
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          )),
-          flexibleSpace: Container(
-            decoration: BoxDecoration(
-              color: AppColors.darkBackgroundColor,
+          title: Obx(
+            () => Text(
+              _controller.survey.value?.name ??
+                  AppLocalizations.of(context).translate('surveyTitle') ??
+                  'Survey',
+              style: AppTheme.headingMedium,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
+          ),
+          flexibleSpace: Container(
+            decoration: BoxDecoration(color: AppColors.darkBackgroundColor),
           ),
           actions: [
             // Use a smaller, more compact language selector
@@ -184,15 +198,24 @@ class _SurveyScreenState extends State<SurveyScreen> {
                 items: [
                   DropdownMenuItem<int>(
                     value: 1,
-                    child: Text('العربية', style: AppTheme.dropdownStyle.copyWith(fontSize: 14)),
+                    child: Text(
+                      'العربية',
+                      style: AppTheme.dropdownStyle.copyWith(fontSize: 14),
+                    ),
                   ),
                   DropdownMenuItem<int>(
                     value: 2,
-                    child: Text('English', style: AppTheme.dropdownStyle.copyWith(fontSize: 14)),
+                    child: Text(
+                      'English',
+                      style: AppTheme.dropdownStyle.copyWith(fontSize: 14),
+                    ),
                   ),
                   DropdownMenuItem<int>(
                     value: 3,
-                    child: Text('اردو', style: AppTheme.dropdownStyle.copyWith(fontSize: 14)),
+                    child: Text(
+                      'اردو',
+                      style: AppTheme.dropdownStyle.copyWith(fontSize: 14),
+                    ),
                   ),
                 ],
               ),
@@ -273,10 +296,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
         // Show survey content
         if (_controller.survey.value == null) {
           return Center(
-            child: Text(
-              'لا توجد بيانات الاستبيان',
-              style: AppTheme.bodyLarge,
-            ),
+            child: Text('لا توجد بيانات الاستبيان', style: AppTheme.bodyLarge),
           );
         }
 
@@ -304,7 +324,9 @@ class _SurveyScreenState extends State<SurveyScreen> {
 
               // Questions stepper
               Container(
-                padding: EdgeInsets.symmetric(horizontal: AppTheme.spacingMedium),
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppTheme.spacingMedium,
+                ),
                 height: 40,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
@@ -329,20 +351,28 @@ class _SurveyScreenState extends State<SurveyScreen> {
 
   Widget _buildStep(int index) {
     // Check if this question has been answered
-    bool isAnswered = _controller.isQuestionAnswered(_controller.survey.value!.questions[index].id);
+    bool isAnswered = _controller.isQuestionAnswered(
+      _controller.survey.value!.questions[index].id,
+    );
     bool isCurrent = index == _controller.currentQuestionIndex.value;
     bool isPast = index < _controller.currentQuestionIndex.value;
 
     // Determine color based on state
     Color backgroundColor;
     if (isAnswered) {
-      backgroundColor = AppColors.stepperCompletionColor; // Use the dedicated completion color
+      backgroundColor =
+          AppColors
+              .stepperCompletionColor; // Use the dedicated completion color
     } else if (isCurrent) {
-      backgroundColor = AppColors.primaryColor; // Current question in primary color
+      backgroundColor =
+          AppColors.primaryColor; // Current question in primary color
     } else if (isPast) {
-      backgroundColor = AppColors.warningColor; // Past but unanswered questions in warning color
+      backgroundColor =
+          AppColors
+              .warningColor; // Past but unanswered questions in warning color
     } else {
-      backgroundColor = AppColors.stepperInactiveColor; // Future questions in inactive color
+      backgroundColor =
+          AppColors.stepperInactiveColor; // Future questions in inactive color
     }
 
     return Container(
@@ -352,14 +382,17 @@ class _SurveyScreenState extends State<SurveyScreen> {
       decoration: BoxDecoration(
         color: backgroundColor,
         shape: BoxShape.circle,
-        boxShadow: isCurrent ? [
-          BoxShadow(
-            color: backgroundColor.withOpacity(0.4),
-            spreadRadius: 1,
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ] : null,
+        boxShadow:
+            isCurrent
+                ? [
+                  BoxShadow(
+                    color: backgroundColor.withOpacity(0.4),
+                    spreadRadius: 1,
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ]
+                : null,
       ),
       child: Center(
         child: Text(
@@ -455,36 +488,45 @@ class _SurveyScreenState extends State<SurveyScreen> {
               children: [
                 // Previous button (or empty space if on first question)
                 SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.43, // ~50% with some spacing
-                  child: _controller.currentQuestionIndex.value > 0
-                    ? OutlinedButton(
-                        onPressed: _controller.previousQuestion,
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          backgroundColor: Colors.grey[800],
-                          side: BorderSide(color: Colors.grey[400]!, width: 1.5),
-                          elevation: 0,
-                          minimumSize: Size.fromHeight(48),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              AppTheme.borderRadiusMedium,
+                  width:
+                      MediaQuery.of(context).size.width *
+                      0.43, // ~50% with some spacing
+                  child:
+                      _controller.currentQuestionIndex.value > 0
+                          ? OutlinedButton(
+                            onPressed: _controller.previousQuestion,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              backgroundColor: Colors.grey[800],
+                              side: BorderSide(
+                                color: Colors.grey[400]!,
+                                width: 1.5,
+                              ),
+                              elevation: 0,
+                              minimumSize: Size.fromHeight(48),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppTheme.borderRadiusMedium,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                        child: Text(
-                          localizations.translate('previous'),
-                          style: AppTheme.buttonTextStyle.copyWith(color: Colors.white),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      )
-                    : Container(), // Empty container if on first question
+                            child: Text(
+                              localizations.translate('previous'),
+                              style: AppTheme.buttonTextStyle.copyWith(
+                                color: Colors.white,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          )
+                          : Container(), // Empty container if on first question
                 ),
 
                 Spacer(), // Space between buttons
-
                 // Next/Finish button
                 SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.43, // ~50% with some spacing
+                  width:
+                      MediaQuery.of(context).size.width *
+                      0.43, // ~50% with some spacing
                   child: OutlinedButton(
                     onPressed: () {
                       if (_controller.currentQuestionIndex.value <
@@ -511,7 +553,9 @@ class _SurveyScreenState extends State<SurveyScreen> {
                               _controller.totalQuestions - 1
                           ? localizations.translate('next')
                           : localizations.translate('finish'),
-                      style: AppTheme.buttonTextStyle.copyWith(color: Colors.white),
+                      style: AppTheme.buttonTextStyle.copyWith(
+                        color: Colors.white,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -558,82 +602,87 @@ class _SurveyScreenState extends State<SurveyScreen> {
     final shouldSubmit = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext context) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(height: 16),
-            // Icon at the top
-            Icon(
-              Icons.help_outline,
-              color: AppColors.primaryColor,
-              size: 48,
+      builder:
+          (BuildContext context) => AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
             ),
-            SizedBox(height: 16),
-            // Title after the icon
-            Text(
-              localizations.translate('confirmSubmission'),
-              style: AppTheme.headingMedium.copyWith(color: Colors.black87),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 24),
-            // Buttons in a row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // Submit button
-                Expanded(
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: Colors.black,
-                      side: BorderSide(color: Colors.white, width: 1),
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
-                      ),
-                    ),
-                    onPressed: () => Navigator.of(context).pop(true),
-                    child: Text(
-                      localizations.translate('submit'),
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
+                SizedBox(height: 16),
+                // Icon at the top
+                Icon(
+                  Icons.help_outline,
+                  color: AppColors.primaryColor,
+                  size: 48,
                 ),
-                SizedBox(width: 16),
-                // Cancel button
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => Navigator.of(context).pop(false),
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppColors.primaryColor,
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: Text(
-                      localizations.translate('cancel'),
-                      style: TextStyle(
-                        color: Colors.grey[700],
-                        fontWeight: FontWeight.normal,
+                SizedBox(height: 16),
+                // Title after the icon
+                Text(
+                  localizations.translate('confirmSubmission'),
+                  style: AppTheme.headingMedium.copyWith(color: Colors.black87),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 24),
+                // Buttons in a row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    // Submit button
+                    // Cancel button
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.primaryColor,
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: Text(
+                          localizations.translate('cancel'),
+                          style: TextStyle(
+                            color: Colors.grey[700],
+                            fontWeight: FontWeight.normal,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
+
+                    SizedBox(width: 16),
+
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.black,
+                          side: BorderSide(color: Colors.white, width: 1),
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.borderRadiusSmall,
+                            ),
+                          ),
+                        ),
+                        onPressed: () => Navigator.of(context).pop(true),
+                        child: Text(
+                          localizations.translate('submit'),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
+          ),
     );
-    
+
     if (shouldSubmit != true) {
       return;
     }
@@ -659,14 +708,14 @@ class _SurveyScreenState extends State<SurveyScreen> {
 
     if (result) {
       // Success - show success message and navigate back to home
-      Get.snackbar(
-        localizations.translate('success'),
-        localizations.translate('surveySubmittedSuccessfully'),
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-        duration: Duration(seconds: 3),
-      );
-      
+      // Get.snackbar(
+      //   localizations.translate('success'),
+      //   localizations.translate('surveySubmittedSuccessfully'),
+      //   backgroundColor: Colors.green,
+      //   colorText: Colors.white,
+      //   duration: Duration(seconds: 3),
+      // );
+
       // Wait for snackbar to be visible and then navigate back
       await Future.delayed(Duration(milliseconds: 500));
       Navigator.of(context).popUntil((route) => route.isFirst);
@@ -679,7 +728,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
         colorText: Colors.white,
         duration: Duration(seconds: 5),
       );
-      
+
       // If it was already submitted, also navigate back
       if (_controller.isCompleted.value) {
         await Future.delayed(Duration(seconds: 2));
@@ -695,18 +744,18 @@ class _SurveyScreenState extends State<SurveyScreen> {
     for (final question in _controller.survey.value?.questions ?? []) {
       final answer = _controller.getAnswerForQuestionRaw(question.id);
       String formattedAnswer = localizations.translate('noAnswer');
-      
+
       if (answer != null) {
         switch (question.questionType) {
           case QuestionType.textBox:
             formattedAnswer = answer.toString();
             break;
-          
+
           case QuestionType.rating:
             final rating = int.tryParse(answer.toString()) ?? 0;
             formattedAnswer = '$rating ${localizations.translate('stars')}';
             break;
-          
+
           case QuestionType.checkBox:
             // Handle multi-choice answers
             if (answer is List) {
@@ -715,10 +764,11 @@ class _SurveyScreenState extends State<SurveyScreen> {
                 // Find matching option text for the value
                 final option = question.answers.firstWhere(
                   (o) => o.answer.toString() == optionValue.toString(),
-                  orElse: () => app_models.SurveyAnswer(
-                    id: 0, 
-                    answer: optionValue.toString()
-                  ),
+                  orElse:
+                      () => app_models.SurveyAnswer(
+                        id: 0,
+                        answer: optionValue.toString(),
+                      ),
                 );
                 selectedOptions.add(option.answer);
               }
@@ -727,35 +777,35 @@ class _SurveyScreenState extends State<SurveyScreen> {
               formattedAnswer = answer.toString();
             }
             break;
-          
+
           case QuestionType.radioButton:
             // Find the option text for the selected value
             final selectedOption = question.answers.firstWhere(
               (o) => o.answer.toString() == answer.toString(),
-              orElse: () => app_models.SurveyAnswer(
-                id: 0, 
-                answer: answer.toString()
-              ),
+              orElse:
+                  () =>
+                      app_models.SurveyAnswer(id: 0, answer: answer.toString()),
             );
             formattedAnswer = selectedOption.answer;
             break;
-          
+
           case QuestionType.dropDown:
             // Find the option text for the selected value
             final selectedOption = question.answers.firstWhere(
               (o) => o.answer.toString() == answer.toString(),
-              orElse: () => app_models.SurveyAnswer(
-                id: 0, 
-                answer: answer.toString()
-              ),
+              orElse:
+                  () =>
+                      app_models.SurveyAnswer(id: 0, answer: answer.toString()),
             );
             formattedAnswer = selectedOption.answer;
             break;
-            
+
           case QuestionType.fileUpload:
             if (answer.toString().startsWith('data:')) {
               // It's a base64 file
-              final nameMatch = RegExp(r'filename=([^;]+)').firstMatch(answer.toString());
+              final nameMatch = RegExp(
+                r'filename=([^;]+)',
+              ).firstMatch(answer.toString());
               final fileName = nameMatch?.group(1) ?? 'uploaded_image.jpg';
               formattedAnswer = '📷 $fileName';
             } else if (answer.toString().contains('/')) {
@@ -765,12 +815,12 @@ class _SurveyScreenState extends State<SurveyScreen> {
               formattedAnswer = '📷 ${answer.toString()}';
             }
             break;
-            
+
           default:
             formattedAnswer = answer.toString();
         }
       }
-      
+
       answersPreview[question.id] = formattedAnswer;
     }
 
@@ -779,107 +829,112 @@ class _SurveyScreenState extends State<SurveyScreen> {
       context: context,
       backgroundColor: AppColors.darkBackgroundColor,
       isScrollControlled: true,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.8, // 80% of screen height
-        padding: EdgeInsets.all(AppTheme.spacingMedium),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Header with title and close button
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      builder:
+          (context) => Container(
+            height:
+                MediaQuery.of(context).size.height *
+                0.8, // 80% of screen height
+            padding: EdgeInsets.all(AppTheme.spacingMedium),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  localizations.translate('answersPreview'),
-                  style: AppTheme.headingMedium,
+                // Header with title and close button
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      localizations.translate('answersPreview'),
+                      style: AppTheme.headingMedium,
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.close, color: AppColors.primaryColor),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
                 ),
-                IconButton(
-                  icon: Icon(Icons.close, color: AppColors.primaryColor),
-                  onPressed: () => Navigator.pop(context),
+                Divider(color: AppColors.dividerColor, height: 24),
+
+                // List of answers
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: _controller.survey.value?.questions.length ?? 0,
+                    itemBuilder: (context, index) {
+                      final question =
+                          _controller.survey.value!.questions[index];
+                      final questionId = question.id;
+                      final formattedAnswer =
+                          answersPreview[questionId] ?? 'لم يتم الإجابة';
+
+                      // Create a card for each question and answer
+                      return Container(
+                        margin: EdgeInsets.only(bottom: 16),
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.previewItemColor,
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.borderRadiusSmall,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${index + 1}. ${question.question}',
+                              style: AppTheme.previewQuestionStyle,
+                            ),
+                            SizedBox(height: 8),
+
+                            // For rating questions, show stars
+                            if (question.questionType == QuestionType.rating &&
+                                formattedAnswer != 'لم يتم الإجابة')
+                              FormatterHelper.buildRatingStars(
+                                int.tryParse(
+                                      formattedAnswer.split(' ').first,
+                                    ) ??
+                                    0,
+                              )
+                            else
+                              Text(
+                                formattedAnswer,
+                                style:
+                                    formattedAnswer == 'لم يتم الإجابة'
+                                        ? AppTheme.previewUnansweredStyle
+                                        : AppTheme.previewAnswerStyle,
+                              ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+                // Close button at bottom
+                Padding(
+                  padding: EdgeInsets.only(top: 16),
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryColor,
+                      foregroundColor: AppColors.darkBackgroundColor,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.borderRadiusMedium,
+                        ),
+                      ),
+                    ),
+                    child: Text(
+                      localizations.translate('close'),
+                      style: AppTheme.buttonTextStyle,
+                    ),
+                  ),
                 ),
               ],
             ),
-            Divider(color: AppColors.dividerColor, height: 24),
-
-            // List of answers
-            Expanded(
-              child: ListView.builder(
-                itemCount: _controller.survey.value?.questions.length ?? 0,
-                itemBuilder: (context, index) {
-                  final question = _controller.survey.value!.questions[index];
-                  final questionId = question.id;
-                  final formattedAnswer = answersPreview[questionId] ?? 'لم يتم الإجابة';
-
-                  // Create a card for each question and answer
-                  return Container(
-                    margin: EdgeInsets.only(bottom: 16),
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.previewItemColor,
-                      borderRadius: BorderRadius.circular(
-                        AppTheme.borderRadiusSmall,
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${index + 1}. ${question.question}',
-                          style: AppTheme.previewQuestionStyle,
-                        ),
-                        SizedBox(height: 8),
-
-                        // For rating questions, show stars
-                        if (question.questionType == QuestionType.rating &&
-                            formattedAnswer != 'لم يتم الإجابة')
-                          FormatterHelper.buildRatingStars(
-                            int.tryParse(
-                                  formattedAnswer.split(' ').first,
-                                ) ??
-                                0,
-                          )
-                        else
-                          Text(
-                            formattedAnswer,
-                            style:
-                                formattedAnswer == 'لم يتم الإجابة'
-                                    ? AppTheme.previewUnansweredStyle
-                                    : AppTheme.previewAnswerStyle,
-                          ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            // Close button at bottom
-            Padding(
-              padding: EdgeInsets.only(top: 16),
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryColor,
-                  foregroundColor: AppColors.darkBackgroundColor,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                      AppTheme.borderRadiusMedium,
-                    ),
-                  ),
-                ),
-                child: Text(
-                  localizations.translate('close'),
-                  style: AppTheme.buttonTextStyle,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 }
