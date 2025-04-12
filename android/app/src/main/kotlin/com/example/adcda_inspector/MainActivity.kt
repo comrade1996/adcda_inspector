@@ -1,4 +1,4 @@
-package com.example.adcda_inspector
+package com.adcda.inspector
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 
