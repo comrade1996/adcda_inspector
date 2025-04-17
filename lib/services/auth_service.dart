@@ -68,6 +68,18 @@ class AuthService extends GetxService {
     }
   }
   
+  // Check if credentials are stored for biometric login
+  Future<bool> hasStoredCredentials() async {
+    try {
+      return await _secureStorage.containsKey(key: 'auth_email') &&
+             await _secureStorage.containsKey(key: 'auth_password') &&
+             _cachedEmail != null && _cachedPassword != null;
+    } catch (e) {
+      print('Error checking stored credentials: $e');
+      return false;
+    }
+  }
+  
   // Login with username and password
   Future<bool> login(String userName, String password, {bool rememberMe = false}) async {
     try {
@@ -136,7 +148,7 @@ class AuthService extends GetxService {
       }
       
       if (_cachedEmail == null || _cachedPassword == null) {
-        errorMessage.value = 'No stored credentials found';
+        errorMessage.value = 'No stored credentials found. First time users need to login with username and password before using fingerprint authentication.';
         return false;
       }
       

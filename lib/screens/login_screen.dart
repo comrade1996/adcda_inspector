@@ -41,9 +41,20 @@ class _LoginScreenState extends State<LoginScreen> {
     );
     
     // Check for biometrics on startup
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _authService.checkBiometricAvailability();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _authService.checkBiometricAvailability();
       _initDeepLinks();
+      
+      // Automatically trigger fingerprint authentication if credentials are available
+      if (_authService.canUseBiometrics.value) {
+        if (await _authService.hasStoredCredentials()) {
+          _handleBiometricLogin();
+        } else {
+          // First time users won't have stored credentials
+          // We don't show error here as it would be confusing for first time users
+          print('No stored credentials for automatic biometric login');
+        }
+      }
     });
   }
   
@@ -373,40 +384,41 @@ class _LoginScreenState extends State<LoginScreen> {
                     
                     SizedBox(height: 20),
                     
-                    // Biometric login button
-                    Obx(() => _authService.canUseBiometrics.value
-                        ? OutlinedButton.icon(
-                            onPressed: _isLoading ? null : _handleBiometricLogin,
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.white,
-                              side: BorderSide(color: Colors.white70),
-                              padding: EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            icon: Icon(Icons.fingerprint),
-                            label: Text(localizations.translate('loginWithBiometrics')),
-                          )
-                        : SizedBox.shrink()),
+                    // UAE PASS login button (disabled)
+                    Opacity(
+                      opacity: 0.5,
+                      child: AbsorbPointer(
+                        absorbing: true, // This makes it unclickable
+                        child: Image.asset(
+                          'assets/images/AR_UAEPASS_Sign_in_Btn_Active.png',
+                          height: 48,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
                     
                     SizedBox(height: 20),
                     
-                    // UAE PASS login button - disabled as requested
-                    SizedBox.shrink(),
-                    
-                    // Original UAE Pass login code (commented out):
-                    // Obx(() => InkWell(
-                    //   onTap: _isLoading || _authService.isProcessingUaePass.value ? null : _handleUaePassLogin,
-                    //   child: Opacity(
-                    //     opacity: _isLoading || _authService.isProcessingUaePass.value ? 0.5 : 1.0,
-                    //     child: Image.asset(
-                    //       'assets/images/AR_UAEPASS_Sign_in_Btn_Active.png',
-                    //       height: 48,
-                    //       fit: BoxFit.contain,
-                    //     ),
-                    //   ),
-                    // )),
+                    // Fingerprint login button (icon only)
+                    Obx(() => _authService.canUseBiometrics.value
+                        ? Container(
+                            height: 56,
+                            width: 56,
+                            margin: EdgeInsets.symmetric(horizontal: 4),
+                            child: ElevatedButton(
+                              onPressed: _isLoading ? null : _handleBiometricLogin,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                foregroundColor: Colors.white,
+                                side: BorderSide(color: Colors.white70),
+                                shape: CircleBorder(),
+                                padding: EdgeInsets.zero,
+                                elevation: 0,
+                              ),
+                              child: Icon(Icons.fingerprint, size: 30),
+                            ),
+                          )
+                        : SizedBox.shrink()),
                     
                     SizedBox(height: 50),
                   ],
