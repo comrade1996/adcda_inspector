@@ -20,6 +20,7 @@ class AuthService extends GetxService {
   final RxBool isLoading = false.obs;
   final RxBool canUseBiometrics = false.obs;
   final RxString errorMessage = ''.obs;
+  final RxBool isProcessingUaePass = false.obs;
   
   // Credentials for auto-login with biometrics
   String? _cachedEmail;
@@ -108,15 +109,17 @@ class AuthService extends GetxService {
           
           return true;
         } else {
+          print('🔍 LOGIN DEBUG: Login failed with message: ${response['message']}');
           errorMessage.value = response['message'] ?? 'Login failed';
           return false;
         }
       } else {
+        print('🔍 LOGIN DEBUG: Response is not a Map, type: ${response.runtimeType}');
         errorMessage.value = 'Invalid response format from server';
         return false;
       }
     } catch (e) {
-      print('Login error: $e');
+      print('🚨 LOGIN ERROR: $e');
       errorMessage.value = e.toString();
       return false;
     } finally {
@@ -351,6 +354,79 @@ class AuthService extends GetxService {
       // In case of error, force re-login for security
       isLoggedIn.value = false;
       _authData = null;
+    }
+  }
+  
+  // Initiate UAE PASS login
+  Future<bool> initiateUaePassLogin() async {
+    try {
+      isProcessingUaePass.value = true;
+      errorMessage.value = '';
+      
+      // In a real implementation, this would redirect to the UAE PASS authentication page
+      // Here we're just showing the URL that you would use
+      print('Initiating UAE PASS login...');
+      
+      // This would typically be handled by opening an in-app browser or system browser
+      // The URL would be provided by UAE PASS documentation
+      final uaePassAuthUrl = "https://stg-id.uaepass.ae/idshub/authorize"
+          "?redirect_uri=${Uri.encodeComponent('adcdainspector://uaepass/callback')}"
+          "&client_id=YOUR_CLIENT_ID"
+          "&response_type=code"
+          "&scope=urn:uae:digitalid:profile:general"
+          "&state=${DateTime.now().millisecondsSinceEpoch}"
+          "&acr_values=urn:safelayer:tws:policies:authentication:level:low";
+          
+      // In a real implementation, you would launch this URL
+      return true;
+    } catch (e) {
+      print('UAE PASS login initiation error: $e');
+      errorMessage.value = e.toString();
+      return false;
+    } finally {
+      isProcessingUaePass.value = false;
+    }
+  }
+  
+  // Complete UAE PASS login with authorization code
+  Future<bool> completeUaePassLogin(String authorizationCode) async {
+    try {
+      isProcessingUaePass.value = true;
+      errorMessage.value = '';
+      
+      print('Completing UAE PASS login with authorization code: $authorizationCode');
+      
+      // In a real implementation, you would exchange the code for a token
+      // This would typically be done by your backend for security
+      final request = {
+        'code': authorizationCode,
+        'grant_type': 'authorization_code',
+        'redirect_uri': 'adcdainspector://uaepass/callback',
+        // Additional parameters as required by UAE PASS
+      };
+      
+      // Mock successful response for demonstration
+      // In a real implementation, you would call your API service
+      
+      // Save auth tokens (mock values for demonstration)
+      final mockAccessToken = 'uaepass_${DateTime.now().millisecondsSinceEpoch}';
+      final mockRefreshToken = 'uaepass_refresh_${DateTime.now().millisecondsSinceEpoch}';
+      
+      await _secureStorage.write(key: 'access_token', value: mockAccessToken);
+      await _secureStorage.write(key: 'refresh_token', value: mockRefreshToken);
+      
+      isLoggedIn.value = true;
+      
+      // Start refresh token timer
+      _startRefreshTimer();
+      
+      return true;
+    } catch (e) {
+      print('UAE PASS completion error: $e');
+      errorMessage.value = e.toString();
+      return false;
+    } finally {
+      isProcessingUaePass.value = false;
     }
   }
 }

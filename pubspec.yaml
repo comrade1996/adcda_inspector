@@ -81,6 +81,12 @@ dependencies:
 
   # App icon
   flutter_launcher_icons: ^0.13.1
+  
+  # Deep linking
+  app_links: ^3.4.3
+  
+  # URL launcher
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:

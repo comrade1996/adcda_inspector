@@ -3,6 +3,7 @@ import 'package:adcda_inspector/constants/app_colors.dart';
 import 'package:adcda_inspector/controllers/survey_controller.dart';
 import 'package:adcda_inspector/utils/app_theme.dart';
 import 'package:adcda_inspector/models/survey.dart' as app_models;
+import 'dart:convert';
 import 'package:adcda_inspector/models/question_type.dart';
 import 'package:adcda_inspector/widgets/question_widgets.dart';
 import 'package:flutter/material.dart';
@@ -757,47 +758,131 @@ class _SurveyScreenState extends State<SurveyScreen> {
             break;
 
           case QuestionType.checkBox:
-            // Handle multi-choice answers
-            if (answer is List) {
-              final selectedOptions = <String>[];
-              for (final optionValue in answer) {
-                // Find matching option text for the value
-                final option = question.answers.firstWhere(
-                  (o) => o.answer.toString() == optionValue.toString(),
-                  orElse:
-                      () => app_models.SurveyAnswer(
-                        id: 0,
-                        answer: optionValue.toString(),
-                      ),
-                );
-                selectedOptions.add(option.answer);
-              }
-              formattedAnswer = selectedOptions.join(', ');
-            } else {
-              formattedAnswer = answer.toString();
-            }
-            break;
-
           case QuestionType.radioButton:
-            // Find the option text for the selected value
-            final selectedOption = question.answers.firstWhere(
-              (o) => o.answer.toString() == answer.toString(),
-              orElse:
-                  () =>
-                      app_models.SurveyAnswer(id: 0, answer: answer.toString()),
-            );
-            formattedAnswer = selectedOption.answer;
+          case QuestionType.dropDown:
+            // Log the answer type and value for debugging
+            print('PREVIEW DEBUG: Question type: ${question.questionType}');
+            print('PREVIEW DEBUG: Multi-choice raw value: $answer, type: ${answer.runtimeType}');
+            // For checkboxes specifically, print more details about the answer structure
+            if (question.questionType == QuestionType.checkBox) {
+              print('PREVIEW DEBUG: CHECKBOX DETAILS:');
+              if (answer is List) {
+                print('PREVIEW DEBUG: List items: ${answer.length}');
+                answer.forEach((item) => print('PREVIEW DEBUG: Item: $item (${item.runtimeType})'));
+              } else if (answer is String) {
+                print('PREVIEW DEBUG: String value: "$answer"');
+                if (answer.startsWith('[') && answer.endsWith(']')) {
+                  print('PREVIEW DEBUG: Looks like JSON array string');
+                }
+              } else if (answer != null) {
+                print('PREVIEW DEBUG: Other type: ${answer.runtimeType}');
+              }
+            }
+            final selectedOptions = <String>[];
+            List<dynamic> answerList = [];
+            
+            // *** CHECKBOX-SPECIFIC APPROACH ***
+            if (question.questionType == QuestionType.checkBox) {
+              print('USING CHECKBOX-SPECIFIC HANDLING FOR QUESTION ${question.id}');
+              
+              // Get all available options for mapping back to labels
+              final allOptions = {};
+              for (var option in question.answers) {
+                allOptions[option.id.toString()] = option.answer;
+              }
+              
+              // Directly look up all checked answers
+              for (var option in question.answers) {
+                // Use controller to check if this specific option is selected
+                final optionKey = '${question.id}_${option.id}';
+                final isChecked = _controller.answers.containsKey(optionKey) && 
+                                 (_controller.answers[optionKey] == true || 
+                                  _controller.answers[optionKey] == 'true');
+                
+                print('CHECKBOX OPTION: ${option.id} (${option.answer}) - Checked: $isChecked');
+                
+                if (isChecked) {
+                  selectedOptions.add(option.answer ?? option.id.toString());
+                }
+              }
+              
+              // Skip the normal multi-choice processing
+              break;
+            }
+              
+            // For radio and dropdown answers, handle all possible formats
+            try {
+              if (answer == null) {
+                // No answer selected
+                answerList = [];
+              } else if (answer is List) {
+                // Already a list format
+                answerList = answer;
+              } else if (answer is String) {
+                if (answer.startsWith('[') && answer.endsWith(']')) {
+                  // JSON array string
+                  try {
+                    answerList = List<dynamic>.from(jsonDecode(answer));
+                  } catch (_) {
+                    // If JSON parse fails, try as comma-separated
+                    answerList = answer.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+                  }
+                } else if (answer.contains(',')) {
+                  // Comma-separated values
+                  answerList = answer.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+                } else {
+                  // Single value
+                  answerList = [answer];
+                }
+              } else {
+                // Any other type, convert to string and use as single value
+                answerList = [answer.toString()];
+              }
+              
+              // For Radio/Dropdown, ensure it's a single-selection answer
+              if ((question.questionType == QuestionType.radioButton || 
+                   question.questionType == QuestionType.dropDown) && 
+                  answerList.length > 1) {
+                answerList = [answerList.first];
+              }
+              
+              // Match each value with an answer option
+              for (final optionValue in answerList) {
+                var optionStr = optionValue?.toString() ?? '';
+                if (optionStr.isEmpty) continue;
+                
+                // First try to match by ID
+                var matchedOption = question.answers.firstWhere(
+                  (o) => o.id.toString() == optionStr,
+                  orElse: () => app_models.SurveyAnswer(id: -1, answer: ''),
+                );
+                
+                // If no match by ID, try by answer text
+                if (matchedOption.id == -1) {
+                  matchedOption = question.answers.firstWhere(
+                    (o) => o.answer?.toString().toLowerCase() == optionStr.toLowerCase(),
+                    orElse: () => app_models.SurveyAnswer(id: 0, answer: optionStr),
+                  );
+                }
+                
+                // Add the matched label (or value if no match found)
+                if (matchedOption.answer != null && matchedOption.answer!.isNotEmpty) {
+                  selectedOptions.add(matchedOption.answer!);
+                } else {
+                  selectedOptions.add(optionStr); // Fallback to the raw value
+                }
+              }
+            } catch (e) {
+              print('ERROR matching multi-choice answers: $e');
+              selectedOptions.add('Error: $e');
+            }
+            
+            formattedAnswer = selectedOptions.isEmpty
+                ? (localizations.translate('noAnswer') ?? '')
+                : selectedOptions.join(' | ');
             break;
 
-          case QuestionType.dropDown:
-            // Find the option text for the selected value
-            final selectedOption = question.answers.firstWhere(
-              (o) => o.answer.toString() == answer.toString(),
-              orElse:
-                  () =>
-                      app_models.SurveyAnswer(id: 0, answer: answer.toString()),
-            );
-            formattedAnswer = selectedOption.answer;
+          // Note: RadioButton and DropDown cases are now handled in the combined multi-choice section above
             break;
 
           case QuestionType.fileUpload:
@@ -846,9 +931,23 @@ class _SurveyScreenState extends State<SurveyScreen> {
                       localizations.translate('answersPreview'),
                       style: AppTheme.headingMedium,
                     ),
-                    IconButton(
-                      icon: Icon(Icons.close, color: AppColors.primaryColor),
+                    OutlinedButton.icon(
+                      icon: Icon(Icons.close, color: Colors.white),
+                      label: Text(
+                        'إغلاق',
+                        style: AppTheme.buttonTextStyle.copyWith(color: Colors.white),
+                      ),
                       onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        backgroundColor: AppColors.darkBackgroundColor,
+                        side: BorderSide(color: Colors.white, width: 1.5),
+                        elevation: 0,
+                        minimumSize: Size(100, 48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -878,8 +977,27 @@ class _SurveyScreenState extends State<SurveyScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.pop(context); // Close preview
+                                _controller.goToQuestion(index);
+                                setState(() {}); // Refresh UI
+                              },
+                              child: CircleAvatar(
+                                radius: 18,
+                                backgroundColor: AppColors.primaryColor,
+                                child: Text(
+                                  '${index + 1}',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 8),
                             Text(
-                              '${index + 1}. ${question.question}',
+                              question.question ?? '',
                               style: AppTheme.previewQuestionStyle,
                             ),
                             SizedBox(height: 8),
@@ -911,14 +1029,14 @@ class _SurveyScreenState extends State<SurveyScreen> {
                 // Close button at bottom
                 Padding(
                   padding: EdgeInsets.only(top: 16),
-                  child: ElevatedButton(
+                  child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryColor,
-                      foregroundColor: AppColors.darkBackgroundColor,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primaryColor,
+                      side: BorderSide(color: AppColors.primaryColor, width: 1.5),
                       padding: EdgeInsets.symmetric(
                         horizontal: 32,
-                        vertical: 12,
+                        vertical: 16,
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(
@@ -928,7 +1046,10 @@ class _SurveyScreenState extends State<SurveyScreen> {
                     ),
                     child: Text(
                       localizations.translate('close'),
-                      style: AppTheme.buttonTextStyle,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),

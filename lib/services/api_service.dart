@@ -72,16 +72,25 @@ class ApiService {
       final authHeaders = await _getAuthHeaders();
       final mergedHeaders = {
         'Content-Type': 'application/json',
+        'accept': 'text/plain',
         ...authHeaders,
         ...?headers?.map((key, value) => MapEntry(key, value.toString())),
       };
 
+      print('🔧 API DEBUG: Headers being used: $mergedHeaders');
+
       // Ensure endpoint starts with '/' if it doesn't include the full URL
       final String url = endpoint.startsWith('http') 
           ? endpoint 
-          : '${AppConstants.baseApiUrl}$endpoint';
+          : endpoint.startsWith('/') 
+              ? '${AppConstants.baseApiUrl}$endpoint'
+              : '${AppConstants.baseApiUrl}/$endpoint';
       
-      print('POST Request to: $url, Query params: $queryParams, Data: ${jsonEncode(data)}');
+      print('🔧 API DEBUG: Base URL from constants: ${AppConstants.baseApiUrl}');
+      print('🔧 API DEBUG: Full URL constructed: $url');
+      print('🔧 API DEBUG: POST Request to: $url');
+      print('🔧 API DEBUG: Query params: $queryParams');
+      print('🔧 API DEBUG: Request payload: ${jsonEncode(data)}');
       
       final response = await _dio.post(
         url,
@@ -90,16 +99,24 @@ class ApiService {
         options: Options(headers: mergedHeaders),
       );
       
-      print('Response status: ${response.statusCode}');
-      print('Response data: ${response.data}');
+      print('🔧 API DEBUG: Response status: ${response.statusCode}');
+      print('🔧 API DEBUG: Response headers: ${response.headers}');
+      print('🔧 API DEBUG: Response data: ${response.data}');
       
       return _handleResponse(response);
     } on DioException catch (e) {
-      print('Error Status: ${e.response?.statusCode}');
-      print('Error Data: ${e.response?.data}');
+      print('🚨 API ERROR: Request failed');
+      print('🚨 API ERROR: URL was: ${endpoint}');
+      print('🚨 API ERROR: Status code: ${e.response?.statusCode}');
+      print('🚨 API ERROR: Error message: ${e.message}');
+      print('🚨 API ERROR: Response data: ${e.response?.data}');
+      print('🚨 API ERROR: Error type: ${e.type}');
+      if (e.response != null) {
+        print('🚨 API ERROR: FULL BODY: ${e.response.toString()}');
+      }
       throw Exception('Error making POST request: ${e.message}');
     } catch (e) {
-      print('Unexpected error in POST request: $e');
+      print('🚨 API ERROR: Unexpected error in POST request: $e');
       throw Exception('Unexpected error: $e');
     }
   }

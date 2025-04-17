@@ -6,6 +6,8 @@ import '../screens/home_screen.dart';
 import '../services/auth_service.dart';
 import '../constants/app_colors.dart';
 import '../l10n/app_localizations.dart';
+import '../services/deep_link_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -23,11 +25,13 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   
   late AuthService _authService;
+  late DeepLinkService _deepLinkService;
 
   @override
   void initState() {
     super.initState();
     _authService = Get.put(AuthService());
+    _deepLinkService = Get.put(DeepLinkService());
     
     SystemChrome.setSystemUIOverlayStyle(
       SystemUiOverlayStyle(
@@ -39,14 +43,97 @@ class _LoginScreenState extends State<LoginScreen> {
     // Check for biometrics on startup
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _authService.checkBiometricAvailability();
+      _initDeepLinks();
     });
   }
   
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
+  Future<void> _initDeepLinks() async {
+    // Register callback for UAE PASS authorization code
+    _deepLinkService.registerUaePassCallback(_handleUaePassCallback);
+    
+    // Initialize deep links
+    await _deepLinkService.initDeepLinks();
+  }
+  
+  void _handleUaePassCallback(String code) {
+    print('Received UAE PASS code: $code');
+    _completeUaePassLogin(code);
+  }
+  
+  Future<void> _completeUaePassLogin(String code) async {
+    setState(() {
+      _isLoading = true;
+    });
+    
+    final success = await _authService.completeUaePassLogin(code);
+    
+    setState(() {
+      _isLoading = false;
+    });
+    
+    if (success) {
+      // Navigate to home screen on successful login
+      Get.off(() => HomeScreen());
+    } else {
+      // Show error message
+      Get.snackbar(
+        AppLocalizations.of(context).translate('loginFailed'),
+        _authService.errorMessage.value,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        margin: EdgeInsets.all(8),
+      );
+    }
+  }
+  
+  Future<void> _handleUaePassLogin() async {
+    final success = await _authService.initiateUaePassLogin();
+    
+    if (success) {
+      // Typically, you would launch the UAE PASS login URL here
+      // For demonstration, we're showing how to do this with url_launcher
+      final uaePassAuthUrl = "https://stg-id.uaepass.ae/idshub/authorize"
+          "?redirect_uri=${Uri.encodeComponent('adcdainspector://uaepass/callback')}"
+          "&client_id=YOUR_CLIENT_ID"
+          "&response_type=code"
+          "&scope=urn:uae:digitalid:profile:general"
+          "&state=${DateTime.now().millisecondsSinceEpoch}"
+          "&acr_values=urn:safelayer:tws:policies:authentication:level:low";
+          
+      try {
+        if (!await launchUrl(Uri.parse(uaePassAuthUrl), mode: LaunchMode.externalApplication)) {
+          Get.snackbar(
+            AppLocalizations.of(context).translate('error'),
+            'Could not launch UAE PASS login page',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+            margin: EdgeInsets.all(8),
+          );
+        }
+      } catch (e) {
+        print('Error launching UAE PASS URL: $e');
+        Get.snackbar(
+          AppLocalizations.of(context).translate('error'),
+          'Error launching UAE PASS: $e',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          margin: EdgeInsets.all(8),
+        );
+      }
+    } else {
+      // Show error message
+      Get.snackbar(
+        AppLocalizations.of(context).translate('error'),
+        _authService.errorMessage.value,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        margin: EdgeInsets.all(8),
+      );
+    }
   }
 
   Future<void> _handleLogin() async {
@@ -109,6 +196,13 @@ class _LoginScreenState extends State<LoginScreen> {
         margin: EdgeInsets.all(8),
       );
     }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -249,16 +343,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     SizedBox(height: 24),
                     
                     // Login button
-                    ElevatedButton(
+                    OutlinedButton(
                       onPressed: _isLoading ? null : _handleLogin,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryColor,
+                      style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.white,
+                        side: BorderSide(color: Colors.white, width: 1.5),
                         padding: EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        disabledBackgroundColor: Colors.grey,
                       ),
                       child: _isLoading
                           ? SizedBox(
@@ -296,6 +389,24 @@ class _LoginScreenState extends State<LoginScreen> {
                             label: Text(localizations.translate('loginWithBiometrics')),
                           )
                         : SizedBox.shrink()),
+                    
+                    SizedBox(height: 20),
+                    
+                    // UAE PASS login button - disabled as requested
+                    SizedBox.shrink(),
+                    
+                    // Original UAE Pass login code (commented out):
+                    // Obx(() => InkWell(
+                    //   onTap: _isLoading || _authService.isProcessingUaePass.value ? null : _handleUaePassLogin,
+                    //   child: Opacity(
+                    //     opacity: _isLoading || _authService.isProcessingUaePass.value ? 0.5 : 1.0,
+                    //     child: Image.asset(
+                    //       'assets/images/AR_UAEPASS_Sign_in_Btn_Active.png',
+                    //       height: 48,
+                    //       fit: BoxFit.contain,
+                    //     ),
+                    //   ),
+                    // )),
                     
                     SizedBox(height: 50),
                   ],
