@@ -80,6 +80,16 @@ class AuthService extends GetxService {
     }
   }
   
+  // Get a value from secure storage
+  Future<String?> getSecureValue(String key) async {
+    try {
+      return await _secureStorage.read(key: key);
+    } catch (e) {
+      print('Error reading from secure storage: $e');
+      return null;
+    }
+  }
+  
   // Login with username and password
   Future<bool> login(String userName, String password, {bool rememberMe = false}) async {
     try {

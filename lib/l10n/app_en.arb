@@ -58,5 +58,6 @@
   "login": "Login",
   "loginWithBiometrics": "Login with Biometrics",
   "loginFailed": "Login Failed",
-  "biometricLoginFailed": "Biometric Login Failed"
+  "biometricLoginFailed": "Biometric Login Failed",
+  "useBiometricsToLogin": "Use your fingerprint to login"
 }

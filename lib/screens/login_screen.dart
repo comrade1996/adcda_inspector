@@ -8,6 +8,7 @@ import '../constants/app_colors.dart';
 import '../l10n/app_localizations.dart';
 import '../services/deep_link_service.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -26,6 +27,9 @@ class _LoginScreenState extends State<LoginScreen> {
   
   late AuthService _authService;
   late DeepLinkService _deepLinkService;
+  
+  String? _storedUsername;
+  RxInt _currentLanguageId = 1.obs;
 
   @override
   void initState() {
@@ -40,9 +44,11 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
     
-    // Check for biometrics on startup
+    // Check for biometrics on startup and load user info
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _authService.checkBiometricAvailability();
+      await _loadUserInfo();
+      await _loadCurrentLanguage();
       _initDeepLinks();
       
       // Automatically trigger fingerprint authentication if credentials are available
@@ -56,6 +62,35 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       }
     });
+  }
+  
+  Future<void> _loadUserInfo() async {
+    if (_authService.canUseBiometrics.value) {
+      if (await _authService.hasStoredCredentials()) {
+        // Retrieve stored username for the welcome message
+        final secureStorage = Get.find<AuthService>();
+        // Get username from the auth service's secured storage
+        _storedUsername = await _authService.getSecureValue('auth_email');
+      }
+    }
+  }
+  
+  Future<void> _loadCurrentLanguage() async {
+    final prefs = await SharedPreferences.getInstance();
+    _currentLanguageId.value = prefs.getInt('languageId') ?? 1; // Default to Arabic (1)
+  }
+  
+  String _getWelcomeMessage(AppLocalizations localizations) {
+    // Return welcome message based on the current language
+    switch (_currentLanguageId.value) {
+      case 2: // English
+        return 'Welcome back';
+      case 3: // Urdu
+        return 'واپس خوش آمدید';
+      case 1: // Arabic
+      default:
+        return 'مرحبا بعودتك';
+    }
   }
   
   Future<void> _initDeepLinks() async {
@@ -236,7 +271,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     // App Logo
                     Container(
                       alignment: Alignment.center,
-                      margin: EdgeInsets.only(bottom: 40),
+                      margin: EdgeInsets.only(bottom: 20),
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
@@ -268,6 +303,53 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       textAlign: TextAlign.center,
                     ).animate().fadeIn(duration: 400.ms),
+                    
+                    SizedBox(height: 16),
+                    
+                    // Welcome message when biometrics are available and username is stored
+                    Obx(() => _authService.canUseBiometrics.value && _storedUsername != null
+                        ? Container(
+                            padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                            margin: EdgeInsets.only(bottom: 20),
+                            decoration: BoxDecoration(
+                              color: Colors.white10,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.white24)
+                            ),
+                            child: Column(
+                              children: [
+                                Text(
+                                  _getWelcomeMessage(localizations),
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.2, end: 0),
+                                SizedBox(height: 4),
+                                Text(
+                                  _storedUsername!,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ).animate().fadeIn(duration: 500.ms, delay: 200.ms),
+                                SizedBox(height: 8),
+                                Text(
+                                  localizations.translate('useBiometricsToLogin'),
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 14,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ).animate().fadeIn(duration: 400.ms, delay: 300.ms),
+                              ],
+                            ),
+                          )
+                        : SizedBox.shrink()),
 
                     SizedBox(height: 30),
                     

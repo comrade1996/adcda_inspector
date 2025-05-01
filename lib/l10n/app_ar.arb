@@ -57,5 +57,6 @@
   "login": "تسجيل الدخول",
   "loginWithBiometrics": "تسجيل الدخول باستخدام البصمة",
   "loginFailed": "فشل تسجيل الدخول",
-  "biometricLoginFailed": "فشل تسجيل الدخول باستخدام البصمة"
+  "biometricLoginFailed": "فشل تسجيل الدخول باستخدام البصمة",
+  "useBiometricsToLogin": "استخدم بصمة إصبعك لتسجيل الدخول"
 }

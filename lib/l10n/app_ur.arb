@@ -60,5 +60,6 @@
   "login": "لاگ ان کریں",
   "loginWithBiometrics": "بایو میٹرکس سے لاگ ان کریں",
   "loginFailed": "لاگ ان ناکام ہو گیا",
-  "biometricLoginFailed": "بایو میٹرک لاگ ان ناکام ہو گیا"
+  "biometricLoginFailed": "بایو میٹرک لاگ ان ناکام ہو گیا",
+  "useBiometricsToLogin": "لاگ ان کرنے کے لیے اپنی فنگر پرنٹ استعمال کریں"
 }
