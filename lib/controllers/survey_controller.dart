@@ -843,15 +843,30 @@ class SurveyController extends GetxController {
           break;
 
         case QuestionType.textBox:
-          // For text boxes, ensure we have a string
-          String textValue = answerValue is String 
-              ? answerValue 
-              : answerValue.toString();
-          
-          formattedAnswers.add(SurveySubmitAnswer(
-            questionId: questionId,
-            textAnswer: textValue,
-          ));
+          // For text boxes, check if it's a numeric value first
+          if (answerValue is num) {
+            // It's a number, use numericAnswer
+            formattedAnswers.add(SurveySubmitAnswer(
+              questionId: questionId,
+              numericAnswer: answerValue.toDouble(),
+            ));
+          } else if (answerValue is String && double.tryParse(answerValue) != null) {
+            // It's a string that can be parsed as a number
+            formattedAnswers.add(SurveySubmitAnswer(
+              questionId: questionId,
+              numericAnswer: double.parse(answerValue),
+            ));
+          } else {
+            // It's a non-numeric string or other value
+            String textValue = answerValue is String 
+                ? answerValue 
+                : answerValue.toString();
+            
+            formattedAnswers.add(SurveySubmitAnswer(
+              questionId: questionId,
+              textAnswer: textValue,
+            ));
+          }
           break;
 
         case QuestionType.date:
@@ -874,13 +889,28 @@ class SurveyController extends GetxController {
           break;
 
         default:
-          // For other types, add as text answer
-          formattedAnswers.add(SurveySubmitAnswer(
-            questionId: questionId,
-            textAnswer: answerValue is String 
-                ? answerValue 
-                : answerValue.toString(),
-          ));
+          // For other types, check if it's a numeric value first
+          if (answerValue is num) {
+            // It's a number, use numericAnswer
+            formattedAnswers.add(SurveySubmitAnswer(
+              questionId: questionId,
+              numericAnswer: answerValue.toDouble(),
+            ));
+          } else if (answerValue is String && double.tryParse(answerValue) != null) {
+            // It's a string that can be parsed as a number
+            formattedAnswers.add(SurveySubmitAnswer(
+              questionId: questionId,
+              numericAnswer: double.parse(answerValue),
+            ));
+          } else {
+            // It's a non-numeric string or other value
+            formattedAnswers.add(SurveySubmitAnswer(
+              questionId: questionId,
+              textAnswer: answerValue is String 
+                  ? answerValue 
+                  : answerValue.toString(),
+            ));
+          }
           break;
       }
     });

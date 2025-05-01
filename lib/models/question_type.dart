@@ -9,7 +9,13 @@ enum QuestionType {
   date,        // 7
   numeric,     // 8
   fileUpload,  // 9
-  comment      // 10
+  comment;      // 10
+
+  /// Convert from int to QuestionType - directly matches server enum values
+  static QuestionType fromInt(int value) => QuestionTypeExtension.fromInt(value);
+
+  /// Convert string to QuestionType (needed for backward compatibility)
+  static QuestionType fromString(String value) => QuestionTypeExtension.fromString(value);
 }
 
 /// Extension to convert int to QuestionType

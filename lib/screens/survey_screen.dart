@@ -783,30 +783,31 @@ class _SurveyScreenState extends State<SurveyScreen> {
             
             // *** CHECKBOX-SPECIFIC APPROACH ***
             if (question.questionType == QuestionType.checkBox) {
-              print('USING CHECKBOX-SPECIFIC HANDLING FOR QUESTION ${question.id}');
-              
-              // Get all available options for mapping back to labels
-              final allOptions = {};
-              for (var option in question.answers) {
-                allOptions[option.id.toString()] = option.answer;
-              }
-              
-              // Directly look up all checked answers
-              for (var option in question.answers) {
-                // Use controller to check if this specific option is selected
-                final optionKey = '${question.id}_${option.id}';
-                final isChecked = _controller.answers.containsKey(optionKey) && 
-                                 (_controller.answers[optionKey] == true || 
-                                  _controller.answers[optionKey] == 'true');
-                
-                print('CHECKBOX OPTION: ${option.id} (${option.answer}) - Checked: $isChecked');
-                
-                if (isChecked) {
-                  selectedOptions.add(option.answer ?? option.id.toString());
+              // Handle checkbox answers from raw data
+              if (answer is List) {
+                answerList.addAll(answer);
+              } else if (answer is String) {
+                try {
+                  answerList.addAll(List<dynamic>.from(jsonDecode(answer)));
+                } catch (_) {
+                  answerList.addAll(answer
+                      .split(',')
+                      .map((e) => e.trim())
+                      .where((e) => e.isNotEmpty));
                 }
               }
-              
-              // Skip the normal multi-choice processing
+              // Map to option labels
+              final selectedOptions = answerList.map((item) {
+                final itemStr = item.toString();
+                final matchedOption = question.answers.firstWhere(
+                  (o) => o.id.toString() == itemStr,
+                  orElse: () => throw '',
+                );
+                return matchedOption.answer ?? itemStr;
+              }).toList();
+              formattedAnswer = selectedOptions.isEmpty
+                  ? (localizations.translate('noAnswer') ?? '')
+                  : selectedOptions.join(' | ');
               break;
             }
               

@@ -115,7 +115,7 @@ class SurveyQuestion {
       'id': id,
       'question': question,
       'helpText': helpText,
-      'questionType': questionType.name,
+      'questionType': questionType.toInt(),
       'isRequired': isRequired,
       'allowMultipleAnswers': allowMultipleAnswers,
       'sortOrder': sortOrder,
