@@ -82,11 +82,7 @@ dependencies:
   # App icon
   flutter_launcher_icons: ^0.13.1
   
-  # Deep linking
-  app_links: ^3.4.3
-  
-  # URL launcher
-  url_launcher: ^6.3.1
+
 
 dev_dependencies:
   flutter_test:
@@ -120,7 +116,7 @@ flutter:
     - assets/survey_data.json
     - assets/images/pattern.png
     - assets/images/adcda_logo.png
-    - assets/images/AR_UAEPASS_Sign_in_Btn_Active.png
+
     - assets/images/loader.json
     - assets/images/loader.gif
 
