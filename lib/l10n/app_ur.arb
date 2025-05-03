@@ -61,5 +61,11 @@
   "loginWithBiometrics": "بایو میٹرکس سے لاگ ان کریں",
   "loginFailed": "لاگ ان ناکام ہو گیا",
   "biometricLoginFailed": "بایو میٹرک لاگ ان ناکام ہو گیا",
-  "useBiometricsToLogin": "لاگ ان کرنے کے لیے اپنی فنگر پرنٹ استعمال کریں"
+  "useBiometricsToLogin": "لاگ ان کرنے کے لیے اپنی فنگر پرنٹ استعمال کریں",
+  "loginWithUAEPass": "یو اے ای پاس کے ساتھ لاگ ان کریں",
+  "uaePassLoginFailed": "یو اے ای پاس لاگ ان ناکام ہو گیا",
+  "or": "یا",
+  "uaePassAppNotFound": "یو اے ای پاس ایپ نہیں ملا",
+  "uaePassAppNotFoundMessage": "اس آلہ پر یو اے ای پاس ایپ انسٹال نہیں ہے۔ کیا آپ براؤزر کے ذریعے تصدیق جاری رکھنا چاہتے ہیں؟",
+  "continueWithBrowser": "براؤزر کے ساتھ جاری رکھیں"
 }

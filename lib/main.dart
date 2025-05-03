@@ -15,6 +15,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:adcda_inspector/services/api_service.dart';
 import 'package:adcda_inspector/services/survey_service.dart';
 import 'package:adcda_inspector/services/auth_service.dart';
+import 'package:adcda_inspector/services/uae_pass_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +24,7 @@ void main() async {
   Get.lazyPut(() => ApiService(), fenix: true);
   Get.lazyPut(() => SurveyService(), fenix: true);
   Get.lazyPut(() => AuthService(), fenix: true);
+  Get.lazyPut(() => UAEPassService(), fenix: true);
 
   // Initialize controllers
   Get.put(SurveyController());

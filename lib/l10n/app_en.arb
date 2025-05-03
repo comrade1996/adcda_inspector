@@ -59,5 +59,11 @@
   "loginWithBiometrics": "Login with Biometrics",
   "loginFailed": "Login Failed",
   "biometricLoginFailed": "Biometric Login Failed",
-  "useBiometricsToLogin": "Use your fingerprint to login"
+  "useBiometricsToLogin": "Use your fingerprint to login",
+  "loginWithUAEPass": "Login with UAE Pass",
+  "uaePassLoginFailed": "UAE Pass Login Failed",
+  "or": "OR",
+  "uaePassAppNotFound": "UAE Pass App Not Found",
+  "uaePassAppNotFoundMessage": "The UAE Pass app is not installed on this device. Would you like to continue with browser-based authentication?",
+  "continueWithBrowser": "Continue with Browser"
 }

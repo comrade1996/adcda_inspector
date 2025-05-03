@@ -58,5 +58,11 @@
   "loginWithBiometrics": "تسجيل الدخول باستخدام البصمة",
   "loginFailed": "فشل تسجيل الدخول",
   "biometricLoginFailed": "فشل تسجيل الدخول باستخدام البصمة",
-  "useBiometricsToLogin": "استخدم بصمة إصبعك لتسجيل الدخول"
+  "useBiometricsToLogin": "استخدم بصمة إصبعك لتسجيل الدخول",
+  "loginWithUAEPass": "تسجيل الدخول بهوية الإمارات",
+  "uaePassLoginFailed": "فشل تسجيل الدخول باستخدام هوية الإمارات",
+  "or": "أو",
+  "uaePassAppNotFound": "تطبيق هوية الإمارات غير موجود",
+  "uaePassAppNotFoundMessage": "تطبيق هوية الإمارات غير مثبت على هذا الجهاز. هل تريد متابعة المصادقة عبر المتصفح؟",
+  "continueWithBrowser": "متابعة باستخدام المتصفح"
 }

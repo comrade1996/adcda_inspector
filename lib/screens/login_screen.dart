@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../screens/home_screen.dart';
 import '../services/auth_service.dart';
+import '../services/uae_pass_service.dart';
 import '../constants/app_colors.dart';
 import '../l10n/app_localizations.dart';
 
@@ -25,7 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   
   late AuthService _authService;
-
+  late UAEPassService _uaePassService;
   
   String? _storedUsername;
   RxInt _currentLanguageId = 1.obs;
@@ -34,6 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     _authService = Get.put(AuthService());
+    _uaePassService = Get.put(UAEPassService());
     
     SystemChrome.setSystemUIOverlayStyle(
       SystemUiOverlayStyle(
@@ -147,6 +149,34 @@ class _LoginScreenState extends State<LoginScreen> {
       Get.snackbar(
         AppLocalizations.of(context).translate('biometricLoginFailed'),
         _authService.errorMessage.value,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        margin: EdgeInsets.all(8),
+      );
+    }
+  }
+  
+  // Handle UAE Pass login
+  Future<void> _handleUAEPassLogin() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final success = await _uaePassService.signInWithUAEPass(context);
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (success) {
+      // Navigate to home screen on successful login
+      Get.off(() => HomeScreen());
+    } else {
+      // Show error message
+      Get.snackbar(
+        AppLocalizations.of(context).translate('loginFailed') ?? 'Login Failed',
+        _uaePassService.errorMessage.value,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -377,28 +407,77 @@ class _LoginScreenState extends State<LoginScreen> {
                     
                     SizedBox(height: 20),
                     
-
+                    // Or divider
+                    Row(
+                      children: [
+                        Expanded(child: Divider(color: Colors.white38)),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            localizations.translate('or') ?? 'OR',
+                            style: TextStyle(color: Colors.white60),
+                          ),
+                        ),
+                        Expanded(child: Divider(color: Colors.white38)),
+                      ],
+                    ),
                     
-                    // Fingerprint login button (icon only)
-                    Obx(() => _authService.canUseBiometrics.value
-                        ? Container(
-                            height: 56,
-                            width: 56,
-                            margin: EdgeInsets.symmetric(horizontal: 4),
-                            child: ElevatedButton(
-                              onPressed: _isLoading ? null : _handleBiometricLogin,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                foregroundColor: Colors.white,
-                                side: BorderSide(color: Colors.white70),
-                                shape: CircleBorder(),
-                                padding: EdgeInsets.zero,
-                                elevation: 0,
-                              ),
-                              child: Icon(Icons.fingerprint, size: 30),
-                            ),
-                          )
-                        : SizedBox.shrink()),
+                    SizedBox(height: 20),
+                    
+                    // UAE Pass login button
+                    OutlinedButton.icon(
+                      onPressed: _isLoading ? null : _handleUAEPassLogin,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: BorderSide(color: const Color(0xFF49A29A), width: 1.5),
+                        padding: EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      icon: Image.asset(
+                        'assets/images/AR_UAEPASS_Sign_in_Btn_Active.png',
+                        height: 24,
+                        width: 24,
+                        errorBuilder: (context, error, stackTrace) => Icon(Icons.login, size: 24),
+                      ),
+                      label: Text(
+                        localizations.translate('loginWithUAEPass') ?? 'Login with UAE Pass',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    
+                    SizedBox(height: 20),
+                    
+                    // Authentication options
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Fingerprint login button (icon only)
+                        Obx(() => _authService.canUseBiometrics.value
+                            ? Container(
+                                height: 56,
+                                width: 56,
+                                margin: EdgeInsets.symmetric(horizontal: 4),
+                                child: ElevatedButton(
+                                  onPressed: _isLoading ? null : _handleBiometricLogin,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.transparent,
+                                    foregroundColor: Colors.white,
+                                    side: BorderSide(color: Colors.white70),
+                                    shape: CircleBorder(),
+                                    padding: EdgeInsets.zero,
+                                    elevation: 0,
+                                  ),
+                                  child: Icon(Icons.fingerprint, size: 30),
+                                ),
+                              )
+                            : SizedBox.shrink()),
+                      ],
+                    ),
                     
                     SizedBox(height: 50),
                   ],

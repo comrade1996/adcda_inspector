@@ -30,6 +30,18 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- UAE Pass callback intent filter -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:host="success"
+                    android:scheme="adcdainspector" />
+                <data
+                    android:host="failure"
+                    android:scheme="adcdainspector" />
+            </intent-filter>
 
         </activity>
         <!-- Don't delete the meta-data below.
@@ -47,6 +59,16 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- UAE Pass app queries -->
+        <package android:name="ae.uaepass.mainapp" /> <!-- Production -->
+        <package android:name="ae.uaepass.mainapp.qa" /> <!-- QA -->
+        <package android:name="ae.uaepass.mainapp.stg" /> <!-- Staging -->
+        <!-- Common browsers for fallback -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
         </intent>
     </queries>
 </manifest>

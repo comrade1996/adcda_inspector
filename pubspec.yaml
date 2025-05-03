@@ -82,6 +82,9 @@ dependencies:
   # App icon
   flutter_launcher_icons: ^0.13.1
   
+  # UAE Pass integration
+  uaepass_api: ^1.0.3
+  
 
 
 dev_dependencies:
