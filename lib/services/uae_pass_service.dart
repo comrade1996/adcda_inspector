@@ -1,17 +1,18 @@
 import 'dart:async';
-import 'dart:convert';
+import 'package:adcda_inspector/l10n/app_localizations.dart';
 import 'package:adcda_inspector/services/auth_service.dart';
+import 'package:adcda_inspector/services/logging_service.dart';
 import 'package:adcda_inspector/utils/api_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:uaepass_api/uaepass_api.dart';
 import 'package:uaepass_api/uaepass/uaepass_user_profile_model.dart';
-import 'package:adcda_inspector/l10n/app_localizations.dart';
 
 class UAEPassService extends GetxService {
   final AuthService _authService = Get.find<AuthService>();
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+  final LoggingService _logger = LoggingService();
   late UaePassAPI _uaePassAPI;
 
   // Observable variables
@@ -117,33 +118,42 @@ class UAEPassService extends GetxService {
       errorMessage.value = '';
 
       // Get authorization code from UAE Pass with fallback to browser if app not found
+      _logger.debug('Starting UAE Pass authorization flow');
       final String? code = await _getUAEPassAuthCode(context);
       
       // If code is null, the user cancelled the login or an error occurred
       if (code == null) {
+        _logger.info('UAE Pass authorization flow was cancelled or failed');
         errorMessage.value = 'UAE Pass login cancelled or failed';
         return false;
       }
 
       // Exchange code for access token
+      _logger.debug('Exchanging authorization code for access token');
       final String? accessToken = await _uaePassAPI.getAccessToken(code);
       
       if (accessToken == null) {
+        _logger.error('Failed to exchange code for access token');
         errorMessage.value = 'Failed to get access token from UAE Pass';
         return false;
       }
 
       // Get user profile
+      _logger.debug('Fetching UAE Pass user profile');
       final userProfile = await _uaePassAPI.getUserProfile(accessToken);
-      
-      if (userProfile == null) {
+
+      if (userProfile != null) {
+        _logger.info('UAE Pass user profile retrieved successfully: ${userProfile.firstnameEN} ${userProfile.lastnameEN}');
+      } else {
         errorMessage.value = 'Failed to get user profile from UAE Pass';
         return false;
       }
 
       // Store UAE Pass user info securely
+      _logger.debug('Storing UAE Pass user information securely');
       await _storeUAEPassUserInfo(userProfile, accessToken);
 
+      _logger.info('UAE Pass authentication completed successfully');
       // Notify the auth service about successful login
       // This would typically involve a backend API call to authenticate with your system
       // For now, we'll just set the isLoggedIn state
@@ -151,7 +161,7 @@ class UAEPassService extends GetxService {
       
       return true;
     } catch (e) {
-      print('UAE Pass sign-in error: $e');
+      _logger.error('UAE Pass sign-in error', e);
       errorMessage.value = e.toString();
       return false;
     } finally {
@@ -218,11 +228,13 @@ class UAEPassService extends GetxService {
   Future<void> logout(BuildContext context) async {
     try {
       isLoading.value = true;
+      _logger.info('Initiating UAE Pass logout');
       
       // Call UAE Pass logout
       await _uaePassAPI.logout(context);
       
       // Clear UAE Pass data
+      _logger.info('Clearing stored UAE Pass user data');
       await _secureStorage.delete(key: 'uae_pass_access_token');
       await _secureStorage.delete(key: 'uae_pass_user_profile');
       await _secureStorage.delete(key: 'uae_pass_idn');
@@ -231,11 +243,12 @@ class UAEPassService extends GetxService {
       await _secureStorage.delete(key: 'uae_pass_email');
       await _secureStorage.delete(key: 'uae_pass_mobile');
       await _secureStorage.delete(key: 'auth_method');
+      _logger.info('UAE Pass user data cleared successfully');
       
       // Call the app's main logout method to clear app session
       await _authService.logout();
     } catch (e) {
-      print('UAE Pass logout error: $e');
+      _logger.error('UAE Pass logout error', e);
       errorMessage.value = e.toString();
     } finally {
       isLoading.value = false;

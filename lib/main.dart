@@ -13,6 +13,7 @@ import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:adcda_inspector/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:adcda_inspector/services/api_service.dart';
+import 'package:adcda_inspector/services/deep_link_service.dart';
 import 'package:adcda_inspector/services/survey_service.dart';
 import 'package:adcda_inspector/services/auth_service.dart';
 import 'package:adcda_inspector/services/uae_pass_service.dart';
@@ -25,6 +26,9 @@ void main() async {
   Get.lazyPut(() => SurveyService(), fenix: true);
   Get.lazyPut(() => AuthService(), fenix: true);
   Get.lazyPut(() => UAEPassService(), fenix: true);
+
+  // Initialize deep link handling
+  Get.put(DeepLinkService());
 
   // Initialize controllers
   Get.put(SurveyController());
