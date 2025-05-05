@@ -2,8 +2,8 @@
 class ApiConfig {
   // Environment URLs - can be switched based on deployment environment
   static const Map<String, String> _environments = {
-    'development': 'https://8gr4b0px-7200.inc1.devtunnels.ms/api',
-    'staging': 'https://8gr4b0px-7200.inc1.devtunnels.ms/api',
+    'development': 'https://inspection-api-dev.adcda.gov.ae/api',
+    'staging': 'https://inspection-api-stg.adcda.gov.ae/api',
     'production': 'https://api.adcda-inspector.com/api',
   };
 
