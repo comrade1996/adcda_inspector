@@ -2,8 +2,8 @@
 class ApiConfig {
   // Environment URLs - can be switched based on deployment environment
   static const Map<String, String> _environments = {
-    'development': 'https://inspection-api-dev.adcda.gov.ae/api',
-    'staging': 'https://inspection-api-stg.adcda.gov.ae/api',
+    'development': 'https://dev.adcd.gov.ae/AdcdaInspectorApi/api',
+    'staging': 'https://dev.adcd.gov.ae/AdcdaInspectorApi/api',
     'production': 'https://api.adcda-inspector.com/api',
   };
 
@@ -69,20 +69,21 @@ class ApiConfig {
     }
     return baseUrl; // Return current base URL if environment is invalid
   }
-  
+
   // UAE Pass Configuration - Staging Sandbox Environment
   // These staging sandbox values should be replaced with production values when going live
   static const String uaePassClientId = 'sandbox_stage';
   static const String uaePassClientSecret = 'sandbox_stage';
-  static const String uaePassRedirectUri = 'adcdainspector://success';
-  
+  static const String uaePassRedirectUri = 'adcdainspector://uaepass/callback';
+
   // UAE Pass environments
   static const Map<String, String> _uaePassEnvironments = {
     'development': 'stg', // staging
-    'staging': 'stg',     // staging
-    'production': 'prod',  // production
+    'staging': 'stg', // staging
+    'production': 'prod', // production
   };
-  
+
   // Get the UAE Pass environment for the current app environment
-  static String get uaePassEnvironment => _uaePassEnvironments[_currentEnvironment]!;
+  static String get uaePassEnvironment =>
+      _uaePassEnvironments[_currentEnvironment]!;
 }

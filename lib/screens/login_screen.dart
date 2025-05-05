@@ -424,20 +424,32 @@ class _LoginScreenState extends State<LoginScreen> {
                     
                     SizedBox(height: 20),
                     
-                    // UAE Pass login using just the image but with login button dimensions
+                    // UAE Pass login using just the image, sized to match the regular login button
                     GestureDetector(
                       onTap: _isLoading ? null : _handleUAEPassLogin,
                       child: Container(
-                        width: double.infinity,
-                        height: 48, // Same height as regular login button
+                        width: double.infinity, 
+                        height: 48, // Match regular login button height
                         child: Opacity(
                           opacity: _isLoading ? 0.5 : 1.0,
-                          child: Image.asset(
-                            'assets/images/AR_UAEPASS_Sign_in_Btn_Active.png',
-                            height: 48,
-                            fit: BoxFit.fitHeight,
-                            errorBuilder: (context, error, stackTrace) => Icon(Icons.login, size: 30, color: Colors.white),
-                          ),
+                          child: _isLoading
+                            ? Center(
+                                child: SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              )
+                            : Image.asset(
+                                'assets/images/AR_UAEPASS_Sign_in_Btn_Active.png',
+                                width: double.infinity, // Match regular login button width
+                                height: 48, // Match regular login button height
+                                fit: BoxFit.fill, // Fill the container
+                                errorBuilder: (context, error, stackTrace) => Icon(Icons.login, size: 30, color: Colors.white),
+                              ),
                         ),
                       ),
                     ),
