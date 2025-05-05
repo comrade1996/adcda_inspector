@@ -71,9 +71,29 @@ class AuthService extends GetxService {
   // Check if credentials are stored for biometric login
   Future<bool> hasStoredCredentials() async {
     try {
-      return await _secureStorage.containsKey(key: 'auth_email') &&
-             await _secureStorage.containsKey(key: 'auth_password') &&
-             _cachedEmail != null && _cachedPassword != null;
+      // Check which authentication method was used
+      final authMethod = await _secureStorage.read(key: 'auth_method');
+      
+      // For UAE Pass authentication
+      if (authMethod == 'uae_pass') {
+        print('Checking UAE Pass credentials for biometric login');
+        // Check if we have the tokens needed for UAE Pass authentication
+        final hasAccessToken = await _secureStorage.containsKey(key: 'access_token');
+        final hasRefreshToken = await _secureStorage.containsKey(key: 'refresh_token');
+        final hasUAEPassToken = await _secureStorage.containsKey(key: 'uae_pass_access_token');
+        
+        final result = hasAccessToken && hasRefreshToken && hasUAEPassToken;
+        print('UAE Pass credentials available: $result');
+        return result;
+      }
+      // For username/password authentication
+      else {
+        final hasCredentials = await _secureStorage.containsKey(key: 'auth_email') &&
+               await _secureStorage.containsKey(key: 'auth_password') &&
+               _cachedEmail != null && _cachedPassword != null;
+        print('Username/password credentials available: $hasCredentials');
+        return hasCredentials;
+      }
     } catch (e) {
       print('Error checking stored credentials: $e');
       return false;
@@ -157,29 +177,78 @@ class AuthService extends GetxService {
         return false;
       }
       
-      if (_cachedEmail == null || _cachedPassword == null) {
-        errorMessage.value = 'No stored credentials found. First time users need to login with username and password before using fingerprint authentication.';
-        return false;
-      }
+      // Check which type of authentication method was used last
+      final authMethod = await _secureStorage.read(key: 'auth_method');
       
-      isLoading.value = true;
-      errorMessage.value = '';
-      
-      // Authenticate with biometrics
-      final authenticated = await _localAuth.authenticate(
-        localizedReason: 'Authenticate to access the app',
-        options: const AuthenticationOptions(
-          stickyAuth: true,
-          biometricOnly: true,
-        ),
-      );
-      
-      if (authenticated) {
-        // Use stored credentials to login
-        return await login(_cachedEmail!, _cachedPassword!, rememberMe: true);
-      } else {
-        errorMessage.value = 'Biometric authentication failed';
-        return false;
+      // If using UAE Pass authentication
+      if (authMethod == 'uae_pass') {
+        // Check if we have a stored UAE Pass token
+        final hasUAEPassToken = await _secureStorage.containsKey(key: 'uae_pass_access_token');
+        if (!hasUAEPassToken) {
+          errorMessage.value = 'No UAE Pass token found. Please login with UAE Pass first.';
+          return false;
+        }
+        
+        isLoading.value = true;
+        errorMessage.value = '';
+        
+        // Authenticate with biometrics
+        final authenticated = await _localAuth.authenticate(
+          localizedReason: 'Authenticate to access the app',
+          options: const AuthenticationOptions(
+            stickyAuth: true,
+            biometricOnly: true,
+          ),
+        );
+        
+        if (authenticated) {
+          // Restore access tokens from secure storage and set login state
+          final accessToken = await _secureStorage.read(key: 'access_token');
+          final refreshToken = await _secureStorage.read(key: 'refresh_token');
+          
+          if (accessToken != null && refreshToken != null) {
+            // Set login state
+            isLoggedIn.value = true;
+            
+            // Start refresh token timer
+            _startRefreshTimer();
+            
+            return true;
+          } else {
+            errorMessage.value = 'Missing authentication tokens. Please login with UAE Pass again.';
+            return false;
+          }
+        } else {
+          errorMessage.value = 'Biometric authentication failed';
+          return false;
+        }
+      } 
+      // If using username/password authentication
+      else {
+        if (_cachedEmail == null || _cachedPassword == null) {
+          errorMessage.value = 'No stored credentials found. First time users need to login with username and password before using fingerprint authentication.';
+          return false;
+        }
+        
+        isLoading.value = true;
+        errorMessage.value = '';
+        
+        // Authenticate with biometrics
+        final authenticated = await _localAuth.authenticate(
+          localizedReason: 'Authenticate to access the app',
+          options: const AuthenticationOptions(
+            stickyAuth: true,
+            biometricOnly: true,
+          ),
+        );
+        
+        if (authenticated) {
+          // Use stored credentials to login
+          return await login(_cachedEmail!, _cachedPassword!, rememberMe: true);
+        } else {
+          errorMessage.value = 'Biometric authentication failed';
+          return false;
+        }
       }
     } catch (e) {
       if (e is PlatformException) {

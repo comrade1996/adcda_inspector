@@ -2,8 +2,8 @@
 class ApiConfig {
   // Environment URLs - can be switched based on deployment environment
   static const Map<String, String> _environments = {
-    'development': 'https://dev.adcd.gov.ae/AdcdaInspectorApi/api',
-    'staging': 'https://r724lrbh-7200.inc1.devtunnels.ms/api',
+    'development': 'https://8gr4b0px-7200.inc1.devtunnels.ms/api',
+    'staging': 'https://8gr4b0px-7200.inc1.devtunnels.ms/api',
     'production': 'https://api.adcda-inspector.com/api',
   };
 
@@ -30,6 +30,7 @@ class ApiConfig {
 
   // Auth endpoints
   static String get loginEndpoint => '$baseUrl$_authPath/login';
+  static String get uaePassLoginEndpoint => '$baseUrl$_authPath/login/uae-pass';
   static String get refreshTokenEndpoint => '$baseUrl$_authPath/refresh-token';
   static String get revokeTokenEndpoint => '$baseUrl$_authPath/revoke-token';
   static String get registerEndpoint => '$baseUrl$_authPath/register/customer';

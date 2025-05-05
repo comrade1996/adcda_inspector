@@ -424,28 +424,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     
                     SizedBox(height: 20),
                     
-                    // UAE Pass login button
-                    OutlinedButton.icon(
-                      onPressed: _isLoading ? null : _handleUAEPassLogin,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: BorderSide(color: const Color(0xFF49A29A), width: 1.5),
-                        padding: EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      icon: Image.asset(
-                        'assets/images/AR_UAEPASS_Sign_in_Btn_Active.png',
-                        height: 24,
-                        width: 24,
-                        errorBuilder: (context, error, stackTrace) => Icon(Icons.login, size: 24),
-                      ),
-                      label: Text(
-                        localizations.translate('loginWithUAEPass') ?? 'Login with UAE Pass',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                    // UAE Pass login using just the image but with login button dimensions
+                    GestureDetector(
+                      onTap: _isLoading ? null : _handleUAEPassLogin,
+                      child: Container(
+                        width: double.infinity,
+                        height: 48, // Same height as regular login button
+                        child: Opacity(
+                          opacity: _isLoading ? 0.5 : 1.0,
+                          child: Image.asset(
+                            'assets/images/AR_UAEPASS_Sign_in_Btn_Active.png',
+                            height: 48,
+                            fit: BoxFit.fitHeight,
+                            errorBuilder: (context, error, stackTrace) => Icon(Icons.login, size: 30, color: Colors.white),
+                          ),
                         ),
                       ),
                     ),
@@ -456,26 +448,35 @@ class _LoginScreenState extends State<LoginScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Fingerprint login button (icon only)
-                        Obx(() => _authService.canUseBiometrics.value
-                            ? Container(
-                                height: 56,
-                                width: 56,
-                                margin: EdgeInsets.symmetric(horizontal: 4),
-                                child: ElevatedButton(
-                                  onPressed: _isLoading ? null : _handleBiometricLogin,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.transparent,
-                                    foregroundColor: Colors.white,
-                                    side: BorderSide(color: Colors.white70),
-                                    shape: CircleBorder(),
-                                    padding: EdgeInsets.zero,
-                                    elevation: 0,
-                                  ),
-                                  child: Icon(Icons.fingerprint, size: 30),
-                                ),
-                              )
-                            : SizedBox.shrink()),
+                        // Fingerprint login button (icon only) - only show if biometrics available AND credentials stored
+                        FutureBuilder<bool>(
+                          future: _authService.hasStoredCredentials(),
+                          builder: (context, snapshot) {
+                            final hasCredentials = snapshot.data ?? false;
+                            // Use GetX value but wrap it properly in an Obx for just the value access
+                            return Obx(() {
+                              return (_authService.canUseBiometrics.value && hasCredentials)
+                                ? Container(
+                                    height: 56,
+                                    width: 56,
+                                    margin: EdgeInsets.symmetric(horizontal: 4),
+                                    child: ElevatedButton(
+                                      onPressed: _isLoading ? null : _handleBiometricLogin,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.transparent,
+                                        foregroundColor: Colors.white,
+                                        side: BorderSide(color: Colors.white70),
+                                        shape: CircleBorder(),
+                                        padding: EdgeInsets.zero,
+                                        elevation: 0,
+                                      ),
+                                      child: Icon(Icons.fingerprint, size: 30),
+                                    ),
+                                  )
+                                : SizedBox.shrink();
+                            });
+                          },
+                        ),
                       ],
                     ),
                     

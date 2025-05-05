@@ -142,23 +142,29 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       
       // Convert the API data to our UI model
-      setState(() {
-        _surveys = surveys.map((dto) => SurveyItem.fromSurveyDTO(dto, context)).toList();
-        _isLoadingData = false;
-      });
+      if (mounted) {
+        setState(() {
+          _surveys = surveys.map((dto) => SurveyItem.fromSurveyDTO(dto, context)).toList();
+          _isLoadingData = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _errorMessage = AppLocalizations.of(context).translate('errorLoadingData');
-        _isLoadingData = false;
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = AppLocalizations.of(context).translate('errorLoadingData');
+          _isLoadingData = false;
+        });
+      }
       print('Error fetching surveys: $e');
     }
   }
 
   void _startSurvey(int surveyId) {
-    setState(() {
-      _isLoading = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
     // Show loader for 2 seconds - more elegant loader
     showDialog(
