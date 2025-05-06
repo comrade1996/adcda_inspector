@@ -21,13 +21,13 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  
+
   bool _isLoading = false;
   bool _obscurePassword = true;
-  
+
   late AuthService _authService;
   late UAEPassService _uaePassService;
-  
+
   String? _storedUsername;
   RxInt _currentLanguageId = 1.obs;
 
@@ -36,21 +36,20 @@ class _LoginScreenState extends State<LoginScreen> {
     super.initState();
     _authService = Get.put(AuthService());
     _uaePassService = Get.put(UAEPassService());
-    
+
     SystemChrome.setSystemUIOverlayStyle(
       SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
       ),
     );
-    
+
     // Check for biometrics on startup and load user info
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _authService.checkBiometricAvailability();
       await _loadUserInfo();
       await _loadCurrentLanguage();
 
-      
       // Automatically trigger fingerprint authentication if credentials are available
       if (_authService.canUseBiometrics.value) {
         if (await _authService.hasStoredCredentials()) {
@@ -63,7 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     });
   }
-  
+
   Future<void> _loadUserInfo() async {
     if (_authService.canUseBiometrics.value) {
       if (await _authService.hasStoredCredentials()) {
@@ -74,12 +73,13 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
   }
-  
+
   Future<void> _loadCurrentLanguage() async {
     final prefs = await SharedPreferences.getInstance();
-    _currentLanguageId.value = prefs.getInt('languageId') ?? 1; // Default to Arabic (1)
+    _currentLanguageId.value =
+        prefs.getInt('languageId') ?? 1; // Default to Arabic (1)
   }
-  
+
   String _getWelcomeMessage(AppLocalizations localizations) {
     // Return welcome message based on the current language
     switch (_currentLanguageId.value) {
@@ -92,14 +92,12 @@ class _LoginScreenState extends State<LoginScreen> {
         return 'مرحبا بعودتك';
     }
   }
-  
-
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
-    
+
     setState(() {
       _isLoading = true;
     });
@@ -129,7 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     }
   }
-  
+
   Future<void> _handleBiometricLogin() async {
     setState(() {
       _isLoading = true;
@@ -156,7 +154,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     }
   }
-  
+
   // Handle UAE Pass login
   Future<void> _handleUAEPassLogin() async {
     setState(() {
@@ -195,7 +193,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
-    
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
@@ -244,56 +242,74 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       textAlign: TextAlign.center,
                     ).animate().fadeIn(duration: 400.ms),
-                    
+
                     SizedBox(height: 16),
-                    
+
                     // Welcome message when biometrics are available and username is stored
-                    Obx(() => _authService.canUseBiometrics.value && _storedUsername != null
-                        ? Container(
-                            padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                            margin: EdgeInsets.only(bottom: 20),
-                            decoration: BoxDecoration(
-                              color: Colors.white10,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.white24)
-                            ),
-                            child: Column(
-                              children: [
-                                Text(
-                                  _getWelcomeMessage(localizations),
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.2, end: 0),
-                                SizedBox(height: 4),
-                                Text(
-                                  _storedUsername!,
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ).animate().fadeIn(duration: 500.ms, delay: 200.ms),
-                                SizedBox(height: 8),
-                                Text(
-                                  localizations.translate('useBiometricsToLogin'),
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 14,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ).animate().fadeIn(duration: 400.ms, delay: 300.ms),
-                              ],
-                            ),
-                          )
-                        : SizedBox.shrink()),
+                    Obx(
+                      () =>
+                          _authService.canUseBiometrics.value &&
+                                  _storedUsername != null
+                              ? Container(
+                                padding: EdgeInsets.symmetric(
+                                  vertical: 16,
+                                  horizontal: 20,
+                                ),
+                                margin: EdgeInsets.only(bottom: 20),
+                                decoration: BoxDecoration(
+                                  color: Colors.white10,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.white24),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Text(
+                                          _getWelcomeMessage(localizations),
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        )
+                                        .animate()
+                                        .fadeIn(duration: 400.ms)
+                                        .slideY(begin: -0.2, end: 0),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      _storedUsername!,
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ).animate().fadeIn(
+                                      duration: 500.ms,
+                                      delay: 200.ms,
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      localizations.translate(
+                                        'useBiometricsToLogin',
+                                      ),
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 14,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ).animate().fadeIn(
+                                      duration: 400.ms,
+                                      delay: 300.ms,
+                                    ),
+                                  ],
+                                ),
+                              )
+                              : SizedBox.shrink(),
+                    ),
 
                     SizedBox(height: 30),
-                    
+
                     // Email field
                     TextFormField(
                       controller: _emailController,
@@ -301,7 +317,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration: InputDecoration(
                         labelText: localizations.translate('usernameOrEmail'),
                         labelStyle: TextStyle(color: Colors.white70),
-                        prefixIcon: Icon(Icons.email_outlined, color: Colors.white70),
+                        prefixIcon: Icon(
+                          Icons.email_outlined,
+                          color: Colors.white70,
+                        ),
                         enabledBorder: OutlineInputBorder(
                           borderSide: BorderSide(color: Colors.white38),
                           borderRadius: BorderRadius.circular(8),
@@ -326,9 +345,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         return null;
                       },
                     ),
-                    
+
                     SizedBox(height: 16),
-                    
+
                     // Password field
                     TextFormField(
                       controller: _passwordController,
@@ -337,10 +356,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration: InputDecoration(
                         labelText: localizations.translate('password'),
                         labelStyle: TextStyle(color: Colors.white70),
-                        prefixIcon: Icon(Icons.lock_outline, color: Colors.white70),
+                        prefixIcon: Icon(
+                          Icons.lock_outline,
+                          color: Colors.white70,
+                        ),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                            _obscurePassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
                             color: Colors.white70,
                           ),
                           onPressed: () {
@@ -373,9 +397,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         return null;
                       },
                     ),
-                    
+
                     SizedBox(height: 24),
-                    
+
                     // Login button
                     OutlinedButton(
                       onPressed: _isLoading ? null : _handleLogin,
@@ -387,26 +411,27 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: _isLoading
-                          ? SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
+                      child:
+                          _isLoading
+                              ? SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                              : Text(
+                                localizations.translate('login'),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            )
-                          : Text(
-                              localizations.translate('login'),
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
                     ),
-                    
+
                     SizedBox(height: 20),
-                    
+
                     // Or divider
                     Row(
                       children: [
@@ -421,41 +446,56 @@ class _LoginScreenState extends State<LoginScreen> {
                         Expanded(child: Divider(color: Colors.white38)),
                       ],
                     ),
-                    
+
                     SizedBox(height: 20),
-                    
-                    // UAE Pass login using just the image, sized to match the regular login button
-                    GestureDetector(
-                      onTap: _isLoading ? null : _handleUAEPassLogin,
-                      child: Container(
-                        width: double.infinity, 
-                        height: 48, // Match regular login button height
-                        child: Opacity(
-                          opacity: _isLoading ? 0.5 : 1.0,
-                          child: _isLoading
-                            ? Center(
-                                child: SizedBox(
+
+                    // UAE Pass login using language-specific buttons, sized to match the regular login button
+                    Obx(
+                      () => OutlinedButton(
+                        onPressed: _isLoading ? null : _handleUAEPassLogin,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(
+                            vertical: 14,
+                          ), // Match the regular login button padding
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          side: BorderSide.none, // No border for image button
+                        ),
+                        child:
+                            _isLoading
+                                ? SizedBox(
                                   height: 20,
                                   width: 20,
                                   child: CircularProgressIndicator(
                                     color: Colors.white,
                                     strokeWidth: 2,
                                   ),
+                                )
+                                : Image.asset(
+                                  // Use English button for English language (2), Arabic button for others
+                                  _currentLanguageId.value == 2
+                                      ? 'assets/images/UAEPASS_Login_Btn_Outline_Active-English.png'
+                                      : 'assets/images/AR_UAEPASS_Sign_in_Btn_Active-Arabic.png',
+                                  width: double.infinity,
+                                  height:
+                                      78, // Slightly smaller than container to avoid stretching
+                                  fit:
+                                      BoxFit
+                                          .contain, // Use contain to maintain aspect ratio
+                                  errorBuilder:
+                                      (context, error, stackTrace) => Icon(
+                                        Icons.login,
+                                        size: 30,
+                                        color: Colors.white,
+                                      ),
                                 ),
-                              )
-                            : Image.asset(
-                                'assets/images/AR_UAEPASS_Sign_in_Btn_Active.png',
-                                width: double.infinity, // Match regular login button width
-                                height: 48, // Match regular login button height
-                                fit: BoxFit.fill, // Fill the container
-                                errorBuilder: (context, error, stackTrace) => Icon(Icons.login, size: 30, color: Colors.white),
-                              ),
-                        ),
                       ),
                     ),
-                    
+
                     SizedBox(height: 20),
-                    
+
                     // Authentication options
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -467,13 +507,17 @@ class _LoginScreenState extends State<LoginScreen> {
                             final hasCredentials = snapshot.data ?? false;
                             // Use GetX value but wrap it properly in an Obx for just the value access
                             return Obx(() {
-                              return (_authService.canUseBiometrics.value && hasCredentials)
-                                ? Container(
+                              return (_authService.canUseBiometrics.value &&
+                                      hasCredentials)
+                                  ? Container(
                                     height: 56,
                                     width: 56,
                                     margin: EdgeInsets.symmetric(horizontal: 4),
                                     child: ElevatedButton(
-                                      onPressed: _isLoading ? null : _handleBiometricLogin,
+                                      onPressed:
+                                          _isLoading
+                                              ? null
+                                              : _handleBiometricLogin,
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.transparent,
                                         foregroundColor: Colors.white,
@@ -485,13 +529,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                       child: Icon(Icons.fingerprint, size: 30),
                                     ),
                                   )
-                                : SizedBox.shrink();
+                                  : SizedBox.shrink();
                             });
                           },
                         ),
                       ],
                     ),
-                    
+
                     SizedBox(height: 50),
                   ],
                 ),
