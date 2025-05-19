@@ -70,11 +70,11 @@ class ApiConfig {
     return baseUrl; // Return current base URL if environment is invalid
   }
 
-  // UAE Pass Configuration - Staging Sandbox Environment
-  // These staging sandbox values should be replaced with production values when going live
-  static const String uaePassClientId = 'sandbox_stage';
-  static const String uaePassClientSecret = 'sandbox_stage';
-  static const String uaePassRedirectUri = 'adcdainspector://uaepass/callback';
+  // UAE Pass Configuration - Staging Environment
+  // These staging values should be replaced with production values when going live
+  static const String uaePassClientId = 'adcdainspectorm_mob_stage';
+  static const String uaePassClientSecret = 'QI3k6SuPEEcRTrxd';
+  static const String uaePassRedirectUri = 'adcdastaginginspector://uaepass/callback';
 
   // UAE Pass environments
   static const Map<String, String> _uaePassEnvironments = {
