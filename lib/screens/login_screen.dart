@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -7,6 +8,7 @@ import '../services/auth_service.dart';
 import '../services/uae_pass_service.dart';
 import '../constants/app_colors.dart';
 import '../l10n/app_localizations.dart';
+import '../models/user_profile.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -140,6 +142,8 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     if (success) {
+      // Save user profile data after successful login
+      await _saveUserProfileData();
       // Navigate to home screen on successful login
       Get.off(() => HomeScreen());
     } else {
@@ -168,8 +172,37 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     if (success) {
-      // Navigate to home screen on successful login
-      Get.off(() => HomeScreen());
+      // Save user profile data after successful UAE Pass login
+      await _saveUAEPassUserProfileData();
+      
+      // Get the UAE Pass unique_name directly from secure storage
+      final uaePassUniqueName = await _authService.getSecureStorage().read(key: 'uae_pass_unique_name');
+      print('UAE Pass unique_name before navigation: $uaePassUniqueName');
+      
+      // Get the current user profile and update it if necessary
+      final userProfile = _authService.getUserProfile();
+      if (userProfile != null && uaePassUniqueName != null && uaePassUniqueName.isNotEmpty) {
+        if (userProfile.uniqueName != uaePassUniqueName) {
+          // Create updated profile with the unique_name
+          final updatedProfile = UserProfile(
+            id: userProfile.id,
+            userName: userProfile.userName,
+            name: userProfile.name,
+            email: userProfile.email,
+            phone: userProfile.phone,
+            roles: userProfile.roles,
+            isUaePassUser: true,
+            uniqueName: uaePassUniqueName,
+          );
+          
+          // Save the updated profile
+          await _authService.saveUserProfile(updatedProfile);
+          print('Updated user profile with unique_name before navigation');
+        }
+      }
+      
+      // Force a complete rebuild by using offAll instead of off
+      Get.offAll(() => HomeScreen());
     } else {
       // Show error message
       Get.snackbar(
@@ -179,6 +212,104 @@ class _LoginScreenState extends State<LoginScreen> {
         backgroundColor: Colors.red,
         colorText: Colors.white,
         margin: EdgeInsets.all(8),
+      );
+    }
+  }
+
+  // Save user profile data from regular login
+  Future<void> _saveUserProfileData() async {
+    try {
+      // Get JWT token data
+      final accessToken = await _authService.getAccessToken();
+      if (accessToken == null) return;
+      
+      // Create user profile
+      final userProfile = await _extractUserProfileFromToken(accessToken);
+      
+      // Save to AuthService
+      await _authService.saveUserProfile(userProfile);
+    } catch (e) {
+      print('Error saving user profile data: $e');
+    }
+  }
+
+  // Save user profile data from UAE Pass login
+  Future<void> _saveUAEPassUserProfileData() async {
+    try {
+      // Get UAE Pass user info
+      final uaePassUserInfo = await _uaePassService.getUAEPassUserInfo();
+      
+      // Get JWT token data for additional info
+      final accessToken = await _authService.getAccessToken();
+      if (accessToken == null) return;
+      
+      // Create user profile from UAE Pass data
+      final userProfile = await _createUserProfileFromUAEPass(uaePassUserInfo, accessToken);
+      
+      // Save to AuthService
+      await _authService.saveUserProfile(userProfile);
+    } catch (e) {
+      print('Error saving UAE Pass user profile data: $e');
+    }
+  }
+
+  // Extract user profile data from JWT token
+  Future<UserProfile> _extractUserProfileFromToken(String token) async {
+    try {
+      // Split the token and decode the payload
+      final parts = token.split('.');
+      if (parts.length != 3) throw Exception('Invalid token format');
+      
+      String payload = parts[1];
+      final padding = '=' * ((4 - payload.length % 4) % 4);
+      payload = payload + padding;
+      
+      final decoded = base64Url.decode(payload);
+      final decodedString = utf8.decode(decoded);
+      final Map<String, dynamic> data = jsonDecode(decodedString);
+      
+      // Create a UserProfile from the token data
+      return UserProfile(
+        id: data['sub'] ?? data['id'] ?? '',
+        userName: data['username'] ?? data['email'] ?? _emailController.text.trim(),
+        name: data['name'] ?? data['username'] ?? _emailController.text.trim(),
+        email: data['email'] ?? _emailController.text.trim(),
+        isUaePassUser: false
+      );
+    } catch (e) {
+      print('Error extracting user profile from token: $e');
+      // Fallback to basic profile with username
+      return UserProfile(
+        userName: _emailController.text.trim(),
+        name: _emailController.text.trim(),
+        isUaePassUser: false
+      );
+    }
+  }
+
+  // Create user profile from UAE Pass data
+  Future<UserProfile> _createUserProfileFromUAEPass(Map<String, String?> uaePassData, String token) async {
+    try {
+      // Get the unique_name directly from secure storage, as it should have been saved during the UAE Pass login flow
+      final uniqueName = await _authService.getSecureStorage().read(key: 'uae_pass_unique_name') ?? '';
+      print('Using unique_name in profile creation: $uniqueName');
+      
+      return UserProfile(
+        id: uaePassData['idn'] ?? '',
+        userName: uaePassData['email'] ?? 'UAE Pass User',
+        name: uaePassData['name_en'] ?? uaePassData['name_ar'] ?? 'UAE Pass User',
+        email: uaePassData['email'] ?? '',
+        phone: uaePassData['mobile'] ?? '',
+        uniqueName: uniqueName, // Use the unique_name from UAE Pass token
+        isUaePassUser: true
+      );
+    } catch (e) {
+      print('Error creating user profile from UAE Pass data: $e');
+      // Fallback to basic profile
+      return UserProfile(
+        userName: 'UAE Pass User',
+        name: 'UAE Pass User',
+        isUaePassUser: true
       );
     }
   }

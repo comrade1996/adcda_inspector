@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:adcda_inspector/constants/app_constants.dart';
 import 'package:adcda_inspector/models/auth_models.dart';
+import 'package:adcda_inspector/models/user_profile.dart';
 import 'package:adcda_inspector/services/api_service.dart';
 import 'package:adcda_inspector/utils/api_config.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:local_auth/local_auth.dart';
@@ -20,6 +23,7 @@ class AuthService extends GetxService {
   final RxBool isLoading = false.obs;
   final RxBool canUseBiometrics = false.obs;
   final RxString errorMessage = ''.obs;
+  final Rx<UserProfile?> currentUser = Rx<UserProfile?>(null);
 
   
   // Credentials for auto-login with biometrics
@@ -202,6 +206,9 @@ class AuthService extends GetxService {
         );
         
         if (authenticated) {
+          // Check if session is valid
+          await checkSessionValidity();
+          
           // Restore access tokens from secure storage and set login state
           final accessToken = await _secureStorage.read(key: 'access_token');
           final refreshToken = await _secureStorage.read(key: 'refresh_token');
@@ -291,12 +298,14 @@ class AuthService extends GetxService {
       // Clear local auth data
       await _secureStorage.delete(key: 'access_token');
       await _secureStorage.delete(key: 'refresh_token');
+      await _secureStorage.delete(key: 'user_profile');
       
       // Keep credentials for biometric login if they exist
       
       // Reset state
       isLoggedIn.value = false;
       _authData = null;
+      currentUser.value = null;
       
       // Cancel refresh timer
       _refreshTimer?.cancel();
@@ -420,33 +429,131 @@ class AuthService extends GetxService {
   // Check if the session is valid or if app needs re-authentication
   Future<void> checkSessionValidity() async {
     try {
-      // Get the last app session ID from secure storage
-      final lastSessionId = await _secureStorage.read(key: 'last_session_id');
+      final accessToken = await _secureStorage.read(key: 'access_token');
+      final refreshToken = await _secureStorage.read(key: 'refresh_token');
       
-      // Generate a new session ID for the current app launch
-      final currentSessionId = DateTime.now().millisecondsSinceEpoch.toString();
-      
-      // If the session IDs don't match or no previous session exists,
-      // the app was terminated and restarted - clear auth state
-      if (lastSessionId == null) {
-        // First time app launch, just save the session ID
-        await _secureStorage.write(key: 'last_session_id', value: currentSessionId);
-      } else {
-        // App was terminated and restarted - require login again
-        // Only clear the isLoggedIn state, but keep credentials for biometric login
-        isLoggedIn.value = false;
-        _authData = null;
+      if (accessToken != null && refreshToken != null) {
+        // Session is valid
+        isLoggedIn.value = true;
         
-        // Update the session ID for this launch
-        await _secureStorage.write(key: 'last_session_id', value: currentSessionId);
+        // Start refresh token timer
+        _startRefreshTimer();
+        
+        // Load user profile
+        await loadUserProfile();
+      } else {
+        // No valid session
+        isLoggedIn.value = false;
       }
     } catch (e) {
       print('Error checking session validity: $e');
-      // In case of error, force re-login for security
       isLoggedIn.value = false;
-      _authData = null;
     }
   }
   
-
+  // Save user profile to secure storage
+  Future<void> saveUserProfile(UserProfile userProfile) async {
+    try {
+      final userJson = jsonEncode(userProfile.toJson());
+      await _secureStorage.write(key: 'user_profile', value: userJson);
+      currentUser.value = userProfile;
+    } catch (e) {
+      print('Error saving user profile: $e');
+    }
+  }
+  
+  // Load user profile from secure storage
+  Future<void> loadUserProfile() async {
+    try {
+      // For now, extract profile from token, later will call API
+      final accessToken = await getAccessToken();
+      if (accessToken != null) {
+        // Extract profile info from token
+        final userProfile = await _extractProfileFromToken(accessToken);
+        if (userProfile != null) {
+          currentUser.value = userProfile;
+          await saveUserProfile(userProfile);
+          return;
+        }
+      }
+      
+      // If we couldn't extract from token, try from secure storage
+      final userJson = await _secureStorage.read(key: 'user_profile');
+      if (userJson != null) {
+        final Map<String, dynamic> userData = jsonDecode(userJson);
+        currentUser.value = UserProfile.fromJson(userData);
+      }
+    } catch (e) {
+      print('Error loading user profile: $e');
+      currentUser.value = null;
+    }
+  }
+  
+  // Extract user profile from JWT token
+  Future<UserProfile?> _extractProfileFromToken(String token) async {
+    try {
+      // Split the token and decode the payload
+      final parts = token.split('.');
+      if (parts.length != 3) {
+        print('Invalid token format');
+        return null;
+      }
+      
+      // Decode the payload (middle part)
+      String payload = parts[1];
+      // Add padding if needed
+      final padding = '=' * ((4 - payload.length % 4) % 4);
+      payload = payload + padding;
+      
+      // Base64 decode
+      final decoded = base64Url.decode(payload);
+      final decodedString = utf8.decode(decoded);
+      
+      // Parse as JSON
+      final Map<String, dynamic> data = jsonDecode(decodedString);
+      print('Token payload data: ${data.keys}');
+      
+      // Extract username from unique_name and email as specified
+      final userName = data['unique_name'];
+      final email = data['email'];
+      
+      if (userName == null && email == null) {
+        print('No user info found in token');
+        return null;
+      }
+      
+      // Store the unique_name claim specifically
+      final String uniqueNameValue = data['unique_name'] ?? '';
+      
+      // Create profile from token data
+      return UserProfile(
+        id: data['sub'] ?? '',
+        userName: userName ?? email ?? 'User',
+        name: userName ?? email ?? 'User',
+        email: email,
+        uniqueName: uniqueNameValue,
+        isUaePassUser: false
+      );
+    } catch (e) {
+      print('Error extracting profile from token: $e');
+      return null;
+    }
+  }
+  
+  // For future use - fetch user profile from API
+  Future<void> fetchUserProfileFromApi() async {
+    // This will be implemented in the future
+    // Currently using token extraction instead
+    print('API profile fetching will be implemented in the future');
+  }
+  
+  // Get user profile
+  UserProfile? getUserProfile() {
+    return currentUser.value;
+  }
+  
+  // Expose the secure storage for use in other classes
+  FlutterSecureStorage getSecureStorage() {
+    return _secureStorage;
+  }
 }

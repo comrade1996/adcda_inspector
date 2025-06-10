@@ -18,6 +18,7 @@ class ApiConfig {
   static const String _surveySubmissionsPath = '/SurveySubmissions';
   static const String _alivePath = '/Alive';
   static const String _authPath = '/Auth';
+  static const String _userProfilePath = '/UserProfile';
 
   // Full endpoint URLs constructed from base URL and paths
   static String get surveysEndpoint => '$baseUrl$_surveysPath';
@@ -36,6 +37,9 @@ class ApiConfig {
   static String get registerEndpoint => '$baseUrl$_authPath/register/customer';
   static String get verifyEmailEndpoint => '$baseUrl$_authPath/verify-email';
   static String get verifyPhoneEndpoint => '$baseUrl$_authPath/verify-phone';
+  
+  // User profile endpoint
+  static String get userProfileEndpoint => '$baseUrl$_userProfilePath';
 
   // Utility method to get survey detail endpoint for a specific survey ID
   static String getSurveyDetailEndpoint(int surveyId, {int? languageId}) =>

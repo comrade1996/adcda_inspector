@@ -1,6 +1,10 @@
+import 'dart:convert';
 import 'package:adcda_inspector/constants/app_constants.dart';
 import 'package:adcda_inspector/constants/app_colors.dart';
+import 'package:adcda_inspector/models/user_profile.dart';
+import 'package:adcda_inspector/screens/login_screen.dart';
 import 'package:adcda_inspector/screens/survey_screen.dart';
+import 'package:adcda_inspector/services/auth_service.dart';
 import 'package:adcda_inspector/services/survey_service.dart';
 import 'package:adcda_inspector/models/survey.dart';
 import 'package:adcda_inspector/models/survey_dto.dart' as dto;
@@ -90,16 +94,195 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final SurveyService _surveyService = SurveyService();
+  final AuthService _authService = Get.find<AuthService>();
   bool _isLoading = false;
   bool _isLoadingData = true;
   List<SurveyItem> _surveys = [];
   String _errorMessage = '';
   int _currentLanguageId = AppConstants.defaultLanguageId;
+  UserProfile? _userProfile;
 
   @override
   void initState() {
     super.initState();
     _loadLanguagePreference();
+    _getUserProfile();
+    
+    // Add a delayed refresh to ensure we get the latest data after login
+    Future.delayed(Duration(milliseconds: 500), () {
+      _refreshUserProfile();
+    });
+  }
+  
+  // Method to explicitly refresh the user profile with the latest unique_name for both UAE Pass and regular users
+  Future<void> _refreshUserProfile() async {
+    final authService = Get.find<AuthService>();
+    final secureStorage = authService.getSecureStorage();
+    
+    // Get token, which contains the unique_name value for all users
+    final token = await secureStorage.read(key: 'auth_token');
+    
+    if (token != null && token.isNotEmpty) {
+      try {
+        // Parse JWT token to get unique_name
+        final parts = token.split('.');
+        if (parts.length >= 2) {
+          // Decode the payload part of the JWT token
+          String normalizedPayload = parts[1]
+              .replaceAll('-', '+')
+              .replaceAll('_', '/');
+              
+          // Add padding if needed
+          while (normalizedPayload.length % 4 != 0) {
+            normalizedPayload += '=';
+          }
+          
+          final payloadBytes = base64Decode(normalizedPayload);
+          final payloadMap = json.decode(utf8.decode(payloadBytes)) as Map<String, dynamic>;
+          
+          // Extract unique_name from token payload
+          final uniqueName = payloadMap['unique_name'] as String?;
+          
+          print('Refreshed unique_name from token: $uniqueName');
+          
+          if (uniqueName != null && uniqueName.isNotEmpty && _userProfile != null) {
+            // Create updated profile with the unique_name
+            final updatedProfile = UserProfile(
+              id: _userProfile!.id,
+              userName: _userProfile!.userName,
+              name: _userProfile!.name,
+              email: _userProfile!.email,
+              phone: _userProfile!.phone,
+              roles: _userProfile!.roles,
+              isUaePassUser: _userProfile!.isUaePassUser,
+              uniqueName: uniqueName,
+            );
+            
+            // Update the state and save to auth service
+            if (mounted) {
+              setState(() {
+                _userProfile = updatedProfile;
+              });
+              // Also save the updated profile to auth service for persistence
+              await authService.saveUserProfile(updatedProfile);
+            }
+          }
+        }
+      } catch (e) {
+        print('Error parsing token to get unique_name: $e');
+      }
+    }
+    
+    // Also check UAE Pass specific storage for unique_name (as a backup)
+    final authMethod = await secureStorage.read(key: 'auth_method');
+    if (authMethod == 'uae_pass') {
+      final uaePassUniqueName = await secureStorage.read(key: 'uae_pass_unique_name');
+      if (uaePassUniqueName != null && uaePassUniqueName.isNotEmpty && 
+          _userProfile != null && (_userProfile!.uniqueName == null || _userProfile!.uniqueName!.isEmpty)) {
+        final updatedProfile = UserProfile(
+          id: _userProfile!.id,
+          userName: _userProfile!.userName,
+          name: _userProfile!.name,
+          email: _userProfile!.email,
+          phone: _userProfile!.phone,
+          roles: _userProfile!.roles,
+          isUaePassUser: true,
+          uniqueName: uaePassUniqueName,
+        );
+        
+        if (mounted) {
+          setState(() {
+            _userProfile = updatedProfile;
+          });
+          // Save updated profile
+          await authService.saveUserProfile(updatedProfile);
+        }
+      }
+    }
+  }
+  
+  // Helper method to extract unique_name directly from JWT token
+  Future<String?> _getUniqueNameDirectlyFromToken() async {
+    try {
+      // Get the auth service and secure storage
+      final authService = Get.find<AuthService>();
+      final secureStorage = authService.getSecureStorage();
+      
+      // Try to get token
+      final token = await secureStorage.read(key: 'auth_token');
+      
+      if (token != null && token.isNotEmpty) {
+        // Parse JWT token
+        final parts = token.split('.');
+        if (parts.length >= 2) {
+          // Decode payload
+          String normalizedPayload = parts[1]
+            .replaceAll('-', '+')
+            .replaceAll('_', '/');
+          
+          // Add padding if needed
+          while (normalizedPayload.length % 4 != 0) {
+            normalizedPayload += '=';
+          }
+          
+          final payloadBytes = base64Decode(normalizedPayload);
+          final payloadMap = json.decode(utf8.decode(payloadBytes)) as Map<String, dynamic>;
+          
+          // Get unique_name claim
+          final uniqueName = payloadMap['unique_name'] as String?;
+          return uniqueName;
+        }
+      }
+      
+      // As a fallback, try to get from UAE Pass specific storage
+      final authMethod = await secureStorage.read(key: 'auth_method');
+      if (authMethod == 'uae_pass') {
+        return await secureStorage.read(key: 'uae_pass_unique_name');
+      }
+    } catch (e) {
+      print('Error getting unique name from token: $e');
+    }
+    return null;
+  }
+  
+  void _getUserProfile() async {
+    _userProfile = _authService.getUserProfile();
+    
+    // Check if this is a UAE Pass login and get the UAE Pass unique_name if available
+    final authService = Get.find<AuthService>();
+    final secureStorage = authService.getSecureStorage();
+    final authMethod = await secureStorage.read(key: 'auth_method');
+    
+    if (authMethod == 'uae_pass') {
+      // Read the unique_name directly from secure storage
+      final uaePassUniqueName = await secureStorage.read(key: 'uae_pass_unique_name');
+      
+      if (uaePassUniqueName != null && uaePassUniqueName.isNotEmpty) {
+        // Update the profile with the UAE Pass unique_name
+        if (_userProfile != null) {
+          setState(() {
+            // Create a new profile with the UAE Pass unique_name
+            _userProfile = UserProfile(
+              id: _userProfile!.id,
+              userName: _userProfile!.userName,
+              name: _userProfile!.name,
+              email: _userProfile!.email,
+              phone: _userProfile!.phone,
+              roles: _userProfile!.roles,
+              isUaePassUser: true,
+              uniqueName: uaePassUniqueName,
+            );
+          });
+        }
+      }
+    }
+    
+    // Listen for changes to the user profile
+    _authService.currentUser.listen((user) {
+      setState(() {
+        _userProfile = user;
+      });
+    });
   }
 
   Future<void> _loadLanguagePreference() async {
@@ -213,9 +396,30 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context);
+    final AppLocalizations localizations = AppLocalizations.of(context);
     
     return Scaffold(
+      appBar: AppBar(
+        title: Image.asset(
+          'assets/images/adcda_logo.png',
+          height: 36,
+          width: 36,
+        ),
+        actions: [
+          // Refresh button in header
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _fetchSurveys,
+            tooltip: localizations.translate('retry'),
+          ),
+          // Language selector widget
+          LanguageSelector(
+            onLanguageChanged: _handleLanguageChanged,
+          ),
+        ],
+      ),
+      // Add drawer for side menu with user information
+      drawer: _buildDrawer(context, localizations),
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -233,73 +437,6 @@ class _HomeScreenState extends State<HomeScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              // App Bar with Title and Language Selector
-              Container(
-                height: 70,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.2),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(30),
-                    bottomRight: Radius.circular(30),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primaryColor.withOpacity(0.05),
-                      blurRadius: 15,
-                      spreadRadius: 1,
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  textDirection: TextDirection.rtl, // Ensure correct RTL layout
-                  children: [
-                    Flexible(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min, // Take only needed space
-                        children: [
-                          Image.asset(
-                            'assets/images/adcda_logo.png',
-                            height: 36,
-                            width: 36,
-                          ),
-                          SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              localizations.translate('appTitle'),
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 18, // Slightly smaller font
-                                fontWeight: FontWeight.bold,
-                              ),
-                              overflow: TextOverflow.ellipsis, // Handle overflow
-                              maxLines: 1,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min, // Take only needed space
-                      children: [
-                        LanguageSelector(
-                          onLanguageChanged: _handleLanguageChanged,
-                        ),
-                        SizedBox(width: 4), // Reduced spacing
-                        IconButton(
-                          icon: Icon(Icons.refresh, color: Colors.white, size: 22),
-                          onPressed: _fetchSurveys,
-                          tooltip: localizations.translate('retry'),
-                          constraints: BoxConstraints(minWidth: 36, minHeight: 36), // Compact size
-                          padding: EdgeInsets.zero, // Remove padding
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              
               // Main content area
               Expanded(
                 child: _isLoadingData
@@ -397,6 +534,206 @@ class _HomeScreenState extends State<HomeScreen> {
               color: Colors.white70,
               fontSize: 16,
               fontFamily: 'NotoKufiArabic',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  // Build drawer with user information and logout button
+  Widget _buildDrawer(BuildContext context, AppLocalizations localizations) {
+    return Drawer(
+      child: Column(
+        children: [
+          // User profile header
+          UserAccountsDrawerHeader(
+            decoration: BoxDecoration(
+              color: AppColors.primaryColor,
+            ),
+            // Use a proper FutureBuilder directly for the accountName
+            accountName: FutureBuilder<String?>(
+              future: _getUniqueNameDirectlyFromToken(),
+              builder: (context, snapshot) {
+                // Default display name if we can't get it from token
+                String displayName = '';
+                
+                // If we have data from the future, use that
+                if (snapshot.hasData && snapshot.data != null && snapshot.data!.isNotEmpty) {
+                  displayName = snapshot.data!;
+                } 
+                // Otherwise fall back to user profile data
+                else if (_userProfile != null) { 
+                  if (_userProfile!.isUaePassUser) {
+                    displayName = _userProfile!.userName ?? '';
+                  } else {
+                    displayName = _userProfile!.uniqueName ?? '';
+                  }
+                }
+                
+                return Text(
+                  displayName,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                );
+              },
+            ),
+            // Removed secondary label display
+            accountEmail: null,
+            currentAccountPicture: CircleAvatar(
+              backgroundColor: Colors.white,
+              // Use ADCDA logo instead of user initial
+              child: ClipOval(
+                child: Padding(
+                  padding: const EdgeInsets.all(2.0),
+                  child: Image.asset(
+                    'assets/images/adcda_logo.png',
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Home option as a list item
+          ListTile(
+            leading: Icon(Icons.home, color: AppColors.primaryColor),
+            title: Text(
+              localizations.translate('home'),
+              style: const TextStyle(fontFamily: 'NotoKufiArabic', color: Colors.black),
+            ),
+            onTap: () {
+              Navigator.pop(context); // Close drawer
+            },
+          ),
+          const Divider(),
+          // Logout option as a list item
+          ListTile(
+            leading: Icon(Icons.logout, color: Colors.red),
+            title: Text(
+              localizations.translate('logout'),
+              style: const TextStyle(fontFamily: 'NotoKufiArabic', color: Colors.black),
+            ),
+            onTap: () async {
+              // Show confirmation dialog
+              final bool confirm = await showDialog<bool>(
+                context: context,
+                barrierDismissible: false,
+                builder: (BuildContext context) => AlertDialog(
+                  backgroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16.0),
+                  ),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(height: 16),
+                      // Icon at the top
+                      Icon(
+                        Icons.logout,
+                        color: Colors.red,
+                        size: 48,
+                      ),
+                      SizedBox(height: 16),
+                      // Title after the icon
+                      Text(
+                        localizations.translate('logout'),
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 16),
+                      // Message
+                      Text(
+                        localizations.translate('logoutConfirmation'),
+                        style: TextStyle(fontSize: 14, color: Colors.black54),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 24),
+                      // Buttons in a row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          // Cancel button
+                          Expanded(
+                            child: TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.grey[700],
+                                padding: EdgeInsets.symmetric(vertical: 12),
+                              ),
+                              child: Text(
+                                localizations.translate('cancel'),
+                                style: TextStyle(
+                                  color: Colors.grey[700],
+                                  fontWeight: FontWeight.normal,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 16),
+                          // Logout button (red)
+                          Expanded(
+                            child: OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                backgroundColor: Colors.red,
+                                side: BorderSide(color: Colors.red, width: 1),
+                                padding: EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                ),
+                              ),
+                              onPressed: () => Navigator.of(context).pop(true),
+                              child: Text(
+                                localizations.translate('logout'),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ) ?? false;
+              
+              if (confirm) {
+                // Close drawer
+                Navigator.pop(context);
+                
+                // Show loading indicator
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+                
+                // Logout
+                await _authService.logout();
+                
+                // Close loading indicator
+                Navigator.pop(context);
+                
+                // Navigate to login screen
+                Get.offAll(() => const LoginScreen());
+              }
+            },
+          ),
+          const Spacer(),
+          // App version at the bottom
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'v1.0.0', // App version
+              style: TextStyle(color: Colors.grey[600], fontSize: 12),
             ),
           ),
         ],

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:adcda_inspector/services/auth_service.dart';
 import 'package:adcda_inspector/utils/api_config.dart';
+import 'package:adcda_inspector/models/user_profile.dart';
 import 'package:adcda_inspector/services/api_service.dart';
 import 'package:adcda_inspector/models/auth_models.dart';
 import 'package:flutter/material.dart';
@@ -146,6 +147,25 @@ class UAEPassService extends GetxService {
       
       print('✅ UAE Pass: Received access token - $accessToken');
 
+      // Immediately decode the UAE Pass token and extract user information
+      print('🔍 Decoding UAE Pass token directly');
+      try {
+        // Extract user data from the UAE Pass token
+        Map<String, dynamic>? uaePassTokenData = _decodeUAEPassToken(accessToken);
+        if (uaePassTokenData != null) {
+          // Store the raw token data for debugging
+          await _secureStorage.write(key: 'uae_pass_raw_token_data', value: jsonEncode(uaePassTokenData));
+          
+          // Extract and store the unique_name specifically
+          final String uniqueName = uaePassTokenData['unique_name'] ?? '';
+          await _secureStorage.write(key: 'uae_pass_unique_name', value: uniqueName);
+          print('Extracted unique_name from UAE Pass token: $uniqueName');
+        }
+      } catch (e) {
+        print('Error decoding UAE Pass token: $e');
+        // Continue with the authentication flow despite token decode errors
+      }
+      
       // Store the UAE Pass access token securely
       await _secureStorage.write(key: 'uae_pass_access_token', value: accessToken);
       await _secureStorage.write(key: 'auth_method', value: 'uae_pass');
@@ -160,6 +180,35 @@ class UAEPassService extends GetxService {
       }
       
       print('✅ Backend API: Authentication successful');
+      
+      // After successful authentication, make sure the profile contains the unique_name
+      try {
+        final uniqueName = await _secureStorage.read(key: 'uae_pass_unique_name');
+        if (uniqueName != null && uniqueName.isNotEmpty) {
+          // Get the current user profile and update it with the unique_name
+          final userProfile = _authService.getUserProfile();
+          if (userProfile != null) {
+            // Create a new profile with the unique_name and update it
+            final updatedProfile = UserProfile(
+              id: userProfile.id,
+              userName: userProfile.userName,
+              name: userProfile.name,
+              email: userProfile.email,
+              phone: userProfile.phone,
+              roles: userProfile.roles,
+              isUaePassUser: true,
+              uniqueName: uniqueName,
+            );
+            
+            // Update the user profile in the auth service
+            await _authService.saveUserProfile(updatedProfile);
+            print('Updated user profile with unique_name: $uniqueName');
+          }
+        }
+      } catch (e) {
+        print('Error updating profile with unique_name: $e');
+        // Continue despite errors here
+      }
       
       return true;
     } catch (e) {
@@ -245,6 +294,47 @@ class UAEPassService extends GetxService {
       print('📥 Backend API Response Status: ${response.statusCode}');
       print('📥 Backend API Response Body: ${response.data}');
       
+      // Decode and analyze the response body immediately
+      print('\n🔍 DECODING BACKEND RESPONSE:\n');
+      if (response.data is Map<String, dynamic>) {
+        if (response.data['data'] != null) {
+          // Decode the access token if available
+          try {
+            final responseData = response.data['data'];
+            if (responseData['accessToken'] != null) {
+              final accessToken = responseData['accessToken'];
+              print('📝 Found accessToken in response');
+              
+              // Decode the token
+              final decodedToken = _decodeUAEPassToken(accessToken);
+              print('🔑 Decoded accessToken payload: ${jsonEncode(decodedToken)}');
+              
+              // Extract and display key claims
+              if (decodedToken != null) {
+                final uniqueName = decodedToken['unique_name'];
+                final sub = decodedToken['sub'];
+                final email = decodedToken['email'];
+                final name = decodedToken['name'];
+                
+                print('👤 unique_name: $uniqueName');
+                print('🆔 sub: $sub');
+                print('📧 email: $email');
+                print('📝 name: $name');
+                
+                // Store unique_name immediately if found
+                if (uniqueName != null) {
+                  await _secureStorage.write(key: 'uae_pass_unique_name', value: uniqueName.toString());
+                  print('💾 Stored unique_name: $uniqueName');
+                }
+              }
+            }
+          } catch (e) {
+            print('⚠️ Error decoding token from response: $e');
+          }
+        }
+      }
+      print('\n🔄 Continuing with response processing...\n');
+      
       // Use the same response handling as in AuthService.login method
       if (response.data is Map<String, dynamic>) {
         if (response.data['success'] == true && response.data['data'] != null) {
@@ -258,13 +348,20 @@ class UAEPassService extends GetxService {
           // Store authentication method
           await _secureStorage.write(key: 'auth_method', value: 'uae_pass');
           
-          // Extract and store username from access token for display purposes
+          // Extract and save user profile data from token
           try {
-            final String displayName = _extractUsernameFromToken(authData.accessToken);
-            await _secureStorage.write(key: 'auth_email', value: displayName);
-            print('💾 Stored display name from token: $displayName');
+            await _extractAndSaveProfileFromToken(authData.accessToken);
           } catch (e) {
-            print('⚠️ Failed to extract username from token: $e');
+            print('⚠️ Failed to extract user profile from token: $e');
+            
+            // Fallback to just extracting the username
+            try {
+              final String displayName = _extractUsernameFromToken(authData.accessToken);
+              await _secureStorage.write(key: 'auth_email', value: displayName);
+              print('💾 Stored display name from token: $displayName');
+            } catch (e) {
+              print('⚠️ Failed to extract username from token: $e');
+            }
           }
           
           // Update auth state
@@ -293,7 +390,108 @@ class UAEPassService extends GetxService {
     }
   }
   
-  // Extract username from JWT token
+  // Extract user profile data from JWT token
+  Future<void> _extractAndSaveProfileFromToken(String token) async {
+    try {
+      // Split the token into its parts
+      final parts = token.split('.');
+      if (parts.length != 3) {
+        throw Exception('Invalid token format');
+      }
+      
+      // Decode the payload (middle part)
+      String payload = parts[1];
+      
+      // Add padding if needed
+      final padding = '=' * ((4 - payload.length % 4) % 4);
+      payload = payload + padding;
+      
+      // Base64 decode
+      final decoded = base64Url.decode(payload);
+      final decodedString = utf8.decode(decoded);
+      
+      // Parse as JSON
+      final Map<String, dynamic> data = jsonDecode(decodedString);
+      print('UAE Pass token payload data: ${data.keys}');
+      
+      // Log full token data for debugging
+      print('Full token data: $data');
+
+      // Extract user information from token - try multiple possible fields
+      // First check if there's a nested "accessToken" in the response
+      Map<String, dynamic> tokenData = data;
+      if (data.containsKey('accessToken')) {
+        print('Found nested accessToken field in the token');
+        // Try to parse the nested access token
+        try {
+          final nestedToken = data['accessToken'] as String;
+          final nestedParts = nestedToken.split('.');
+          if (nestedParts.length == 3) {
+            String nestedPayload = nestedParts[1];
+            final nestedPadding = '=' * ((4 - nestedPayload.length % 4) % 4);
+            nestedPayload = nestedPayload + nestedPadding;
+            final nestedDecoded = base64Url.decode(nestedPayload);
+            final nestedDecodedString = utf8.decode(nestedDecoded);
+            final Map<String, dynamic> nestedData = jsonDecode(nestedDecodedString);
+            print('Nested token data: $nestedData');
+            tokenData = nestedData; // Use the nested token data instead
+          }
+        } catch (e) {
+          print('Error parsing nested token: $e');
+          // Continue with the original token data
+        }
+      }
+      
+      // Try to extract data from multiple possible field names
+      final String userId = tokenData['sub'] ?? 
+                           tokenData['id'] ?? 
+                           tokenData['userId'] ?? 
+                           '';
+      
+      final String userName = tokenData['unique_name'] ?? 
+                             tokenData['name'] ?? 
+                             tokenData['displayName'] ?? 
+                             tokenData['preferred_username'] ?? 
+                             tokenData['username'] ?? 
+                             '';
+      
+      final String email = tokenData['email'] ?? 
+                          tokenData['mail'] ?? 
+                          '';
+
+      final String fullName = tokenData['name'] ?? 
+                            tokenData['fullName'] ?? 
+                            tokenData['full_name'] ?? 
+                            userName ?? 
+                            email ?? 
+                            'UAE Pass User';
+      
+      // Extract the unique_name specifically
+      final String uniqueName = tokenData['unique_name'] ?? '';
+      
+      // Create user profile from token data
+      final userProfile = UserProfile(
+        id: userId,
+        userName: userName.isNotEmpty ? userName : (email.isNotEmpty ? email : 'UAE Pass User'),
+        name: fullName,
+        email: email,
+        uniqueName: uniqueName,
+        isUaePassUser: true
+      );
+      
+      // Save user profile using auth service
+      await _authService.saveUserProfile(userProfile);
+      print('✅ UAE Pass user profile saved from token');
+      
+      // Store all extracted data for debugging and future use
+      await _secureStorage.write(key: 'uae_pass_token_data', value: jsonEncode(data));
+      
+    } catch (e) {
+      print('⚠️ Error extracting profile from token: $e');
+    }
+  }
+  
+  // Extract username from JWT token (legacy method)
   String _extractUsernameFromToken(String token) {
     try {
       // Split the token into its parts
@@ -316,27 +514,19 @@ class UAEPassService extends GetxService {
       // Parse as JSON
       final Map<String, dynamic> data = jsonDecode(decodedString);
       
-      // Extract username - try different common JWT claims
-      // The actual field depends on how your backend structures the token
-      String? username;
-      
-      // Try various common JWT claim fields
-      if (data.containsKey('sub')) {
-        username = data['sub']; // Subject claim
-      } else if (data.containsKey('username')) {
-        username = data['username'];
-      } else if (data.containsKey('name')) {
-        username = data['name'];
+      // We now specifically look for unique_name as mentioned by the user
+      if (data.containsKey('unique_name')) {
+        return data['unique_name'];
       } else if (data.containsKey('email')) {
-        username = data['email'];
-      } else if (data.containsKey('preferred_username')) {
-        username = data['preferred_username'];
-      } else if (data.containsKey('unique_name')) {
-        username = data['unique_name'];
+        return data['email'];
       }
       
-      // If no username field found, use a generic name
-      return username ?? 'UAE Pass User';
+      // Fallback to other fields
+      return data['sub'] ?? 
+             data['username'] ?? 
+             data['name'] ?? 
+             data['preferred_username'] ?? 
+             'UAE Pass User';
     } catch (e) {
       print('⚠️ Error decoding token: $e');
       return 'UAE Pass User'; // Fallback
@@ -384,6 +574,8 @@ class UAEPassService extends GetxService {
       await _secureStorage.delete(key: 'uae_pass_name_ar');
       await _secureStorage.delete(key: 'uae_pass_email');
       await _secureStorage.delete(key: 'uae_pass_mobile');
+      await _secureStorage.delete(key: 'uae_pass_unique_name');
+      await _secureStorage.delete(key: 'uae_pass_raw_token_data');
       await _secureStorage.delete(key: 'auth_method');
       
       // Call the app's main logout method to clear app session
@@ -393,6 +585,37 @@ class UAEPassService extends GetxService {
       errorMessage.value = e.toString();
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  // Helper method to decode UAE Pass token
+  Map<String, dynamic>? _decodeUAEPassToken(String token) {
+    try {
+      // Split the token into its parts
+      final parts = token.split('.');
+      if (parts.length != 3) {
+        print('Invalid token format');
+        return null;
+      }
+      
+      // Decode the payload (middle part)
+      String payload = parts[1];
+      // Add padding if needed
+      final padding = '=' * ((4 - payload.length % 4) % 4);
+      payload = payload + padding;
+      
+      // Base64 decode
+      final decoded = base64Url.decode(payload);
+      final decodedString = utf8.decode(decoded);
+      
+      // Parse as JSON
+      final Map<String, dynamic> data = jsonDecode(decodedString);
+      print('UAE Pass token payload data: ${data.keys}');
+      
+      return data;
+    } catch (e) {
+      print('Error decoding UAE Pass token: $e');
+      return null;
     }
   }
 }

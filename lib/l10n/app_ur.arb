@@ -67,5 +67,10 @@
   "or": "یا",
   "uaePassAppNotFound": "یو اے ای پاس ایپ نہیں ملا",
   "uaePassAppNotFoundMessage": "اس آلہ پر یو اے ای پاس ایپ انسٹال نہیں ہے۔ کیا آپ براؤزر کے ذریعے تصدیق جاری رکھنا چاہتے ہیں؟",
-  "continueWithBrowser": "براؤزر کے ساتھ جاری رکھیں"
+  "continueWithBrowser": "براؤزر کے ساتھ جاری رکھیں",
+  "user": "صارف",
+  "noEmail": "کوئی ای میل نہیں",
+  "home": "ہوم",
+  "logout": "لاگ آؤٹ",
+  "logoutConfirmation": "کیا آپ واقعی لاگ آؤٹ کرنا چاہتے ہیں؟"
 }

@@ -65,5 +65,11 @@
   "or": "OR",
   "uaePassAppNotFound": "UAE Pass App Not Found",
   "uaePassAppNotFoundMessage": "The UAE Pass app is not installed on this device. Would you like to continue with browser-based authentication?",
-  "continueWithBrowser": "Continue with Browser"
+  "continueWithBrowser": "Continue with Browser",
+
+  "user": "User",
+  "noEmail": "No email address",
+  "home": "Home",
+  "logout": "Logout",
+  "logoutConfirmation": "Are you sure you want to logout?"
 }
