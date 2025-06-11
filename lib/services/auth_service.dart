@@ -556,4 +556,15 @@ class AuthService extends GetxService {
   FlutterSecureStorage getSecureStorage() {
     return _secureStorage;
   }
+  
+  // Check if the user is authenticated with UAE Pass
+  Future<bool> isUaePassAuthenticated() async {
+    try {
+      final authMethod = await _secureStorage.read(key: 'auth_method');
+      return authMethod == 'uae_pass';
+    } catch (e) {
+      print('Error checking UAE Pass authentication: $e');
+      return false;
+    }
+  }
 }
