@@ -543,6 +543,12 @@ class _HomeScreenState extends State<HomeScreen> {
   
   // Build drawer with user information and logout button
   Widget _buildDrawer(BuildContext context, AppLocalizations localizations) {
+    // Decode the userID from token when drawer is opened
+    // This ensures we always get the most up-to-date information
+    final Future<String?> userIdFuture = _getUniqueNameDirectlyFromToken();
+    
+    print('📋 Drawer: Refreshing user ID from token...');
+    
     return Drawer(
       child: Column(
         children: [
@@ -551,9 +557,10 @@ class _HomeScreenState extends State<HomeScreen> {
             decoration: BoxDecoration(
               color: AppColors.primaryColor,
             ),
-            // Use a proper FutureBuilder directly for the accountName
+            // Use a FutureBuilder to ensure we always get the latest decoded unique_name
             accountName: FutureBuilder<String?>(
-              future: _getUniqueNameDirectlyFromToken(),
+              // Always use a fresh future when drawer is opened
+              future: userIdFuture,
               builder: (context, snapshot) {
                 // Default display name if we can't get it from token
                 String displayName = '';
@@ -561,14 +568,25 @@ class _HomeScreenState extends State<HomeScreen> {
                 // If we have data from the future, use that
                 if (snapshot.hasData && snapshot.data != null && snapshot.data!.isNotEmpty) {
                   displayName = snapshot.data!;
+                  print('📋 Drawer displaying decoded userID: $displayName');
                 } 
                 // Otherwise fall back to user profile data
                 else if (_userProfile != null) { 
-                  if (_userProfile!.isUaePassUser) {
-                    displayName = _userProfile!.userName ?? '';
-                  } else {
+                  if (_userProfile!.uniqueName != null && _userProfile!.uniqueName!.isNotEmpty) {
                     displayName = _userProfile!.uniqueName ?? '';
+                    print('📋 Drawer using profile uniqueName: $displayName');
+                  } else if (_userProfile!.isUaePassUser) {
+                    displayName = _userProfile!.userName ?? '';
+                    print('📋 Drawer using profile userName: $displayName');
+                  } else {
+                    displayName = _userProfile!.name ?? '';
+                    print('📋 Drawer using profile name: $displayName');
                   }
+                }
+                
+                if (displayName.isEmpty) {
+                  displayName = localizations.translate('user') ?? 'User';
+                  print('📋 Drawer using default name: $displayName');
                 }
                 
                 return Text(
