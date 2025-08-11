@@ -4,11 +4,11 @@ class ApiConfig {
   static const Map<String, String> _environments = {
     'development': 'https://dev.adcd.gov.ae/AdcdaInspectorApi/api',
     'staging': 'https://dev.adcd.gov.ae/AdcdaInspectorApi/api',
-    'production': 'https://api.adcda-inspector.com/api',
+    'production': 'https://dev.adcd.gov.ae/AdcdaInspectorApi/api',
   };
 
   // Current active environment
-  static const String _currentEnvironment = 'development';
+  static const String _currentEnvironment = 'production';
 
   // Get the base URL for the current environment
   static String get baseUrl => _environments[_currentEnvironment]!;
@@ -37,7 +37,7 @@ class ApiConfig {
   static String get registerEndpoint => '$baseUrl$_authPath/register/customer';
   static String get verifyEmailEndpoint => '$baseUrl$_authPath/verify-email';
   static String get verifyPhoneEndpoint => '$baseUrl$_authPath/verify-phone';
-  
+
   // User profile endpoint
   static String get userProfileEndpoint => '$baseUrl$_userProfilePath';
 
@@ -74,11 +74,10 @@ class ApiConfig {
     return baseUrl; // Return current base URL if environment is invalid
   }
 
-  // UAE Pass Configuration - Staging Environment
-  // These staging values should be replaced with production values when going live
-  static const String uaePassClientId = 'adcdainspectorm_mob_stage';
-  static const String uaePassClientSecret = 'QI3k6SuPEEcRTrxd';
-  static const String uaePassRedirectUri = 'adcdastaginginspector://uaepass/callback';
+  // UAE Pass Configuration - Production Environment
+  static const String uaePassClientId = 'adcd_inspector_mob_prod';
+  static const String uaePassClientSecret = 'PWTvGzgd9aYAINWa';
+  static const String uaePassRedirectUri = 'adcdainspector://uaepass/callback';
 
   // UAE Pass environments
   static const Map<String, String> _uaePassEnvironments = {

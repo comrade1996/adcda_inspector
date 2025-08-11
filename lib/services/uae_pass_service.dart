@@ -24,12 +24,12 @@ class UAEPassService extends GetxService {
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
 
-  // UAE Pass configuration - Using staging sandbox environment
+  // UAE Pass configuration - Dynamically set from ApiConfig
   final String _clientId = ApiConfig.uaePassClientId;
   final String _clientSecret = ApiConfig.uaePassClientSecret;
   final String _redirectUri = ApiConfig.uaePassRedirectUri;
   final String _appScheme = "adcdainspector";
-  final bool _isProduction = false; // Using staging environment (false = staging, true = production)
+  bool get _isProduction => ApiConfig.uaePassEnvironment == 'prod'; // Dynamically read from ApiConfig environment
   
   @override
   void onInit() {
