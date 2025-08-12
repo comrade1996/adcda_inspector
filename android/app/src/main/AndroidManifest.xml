@@ -36,11 +36,9 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
-                    android:host="success"
-                    android:scheme="adcdainspector" />
-                <data
-                    android:host="failure"
-                    android:scheme="adcdainspector" />
+                    android:scheme="adcdainspector"
+                    android:host="uaepass"
+                    android:path="/callback" />
             </intent-filter>
 
         </activity>

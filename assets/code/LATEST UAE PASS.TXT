@@ -1,0 +1,2514 @@
+Directory structure:
+└── midhlajnazar-uaepass_official/
+    ├── README.md
+    ├── analysis_options.yaml
+    ├── CHANGELOG.md
+    ├── LICENSE
+    ├── pubspec.yaml
+    ├── .flutter-plugins-dependencies
+    ├── .metadata
+    ├── example/
+    │   ├── README.md
+    │   ├── analysis_options.yaml
+    │   ├── pubspec.lock
+    │   ├── pubspec.yaml
+    │   ├── .metadata
+    │   ├── android/
+    │   │   ├── gradle.properties
+    │   │   ├── app/
+    │   │   │   └── src/
+    │   │   │       ├── debug/
+    │   │   │       │   └── AndroidManifest.xml
+    │   │   │       ├── main/
+    │   │   │       │   ├── AndroidManifest.xml
+    │   │   │       │   ├── kotlin/
+    │   │   │       │   │   └── com/
+    │   │   │       │   │       └── example/
+    │   │   │       │   │           └── example/
+    │   │   │       │   │               └── MainActivity.kt
+    │   │   │       │   └── res/
+    │   │   │       │       ├── drawable/
+    │   │   │       │       │   └── launch_background.xml
+    │   │   │       │       ├── drawable-v21/
+    │   │   │       │       │   └── launch_background.xml
+    │   │   │       │       ├── values/
+    │   │   │       │       │   └── styles.xml
+    │   │   │       │       └── values-night/
+    │   │   │       │           └── styles.xml
+    │   │   │       └── profile/
+    │   │   │           └── AndroidManifest.xml
+    │   │   └── gradle/
+    │   │       └── wrapper/
+    │   │           └── gradle-wrapper.properties
+    │   ├── ios/
+    │   │   ├── Podfile
+    │   │   ├── Podfile.lock
+    │   │   ├── Flutter/
+    │   │   │   ├── AppFrameworkInfo.plist
+    │   │   │   ├── Debug.xcconfig
+    │   │   │   └── Release.xcconfig
+    │   │   ├── Runner/
+    │   │   │   ├── AppDelegate.swift
+    │   │   │   ├── Info.plist
+    │   │   │   ├── Runner-Bridging-Header.h
+    │   │   │   ├── Assets.xcassets/
+    │   │   │   │   ├── AppIcon.appiconset/
+    │   │   │   │   │   └── Contents.json
+    │   │   │   │   └── LaunchImage.imageset/
+    │   │   │   │       ├── README.md
+    │   │   │   │       └── Contents.json
+    │   │   │   └── Base.lproj/
+    │   │   │       ├── LaunchScreen.storyboard
+    │   │   │       └── Main.storyboard
+    │   │   └── RunnerTests/
+    │   │       └── RunnerTests.swift
+    │   ├── lib/
+    │   │   └── main.dart
+    │   └── test/
+    │       └── widget_test.dart
+    ├── lib/
+    │   ├── uaepass_official.dart
+    │   ├── model/
+    │   │   ├── uaepass_user_profile_model.dart
+    │   │   └── uaepass_user_token_model.dart
+    │   ├── service/
+    │   │   └── memory_service.dart
+    │   └── uaepass/
+    │       ├── constant.dart
+    │       ├── uae_pass_api.dart
+    │       └── uaepass_view.dart
+    └── test/
+        └── uaepass_official_test.dart
+
+================================================
+FILE: README.md
+================================================
+
+
+````markdown
+# uaepass_official
+
+Unofficial UAE PASS Flutter package enabling seamless national digital identity authentication with support for **installed** and **non-installed** UAEPass app scenarios.
+
+---
+
+## 🚀 Why `uaepass_official`?
+
+- ✅ **Simple & Developer-Friendly API**
+- 🧩 Supports both installed and browser-based UAEPass login
+- 📲 Fullscreen OAuth2 flow
+- 🛡️ Null safety compliant
+- 🔄 Easily integrates with **Riverpod**, **Bloc**, or any other state management
+- 🌐 Multilingual support (English / Arabic)
+- 🔒 SOP1 user type blocking (optional)
+- ⚠️ This package only supports **Android** and **iOS**. Other platforms like web, Windows, or macOS are not supported.
+
+
+---
+
+## 📦 Installation
+
+### 1. Add to `pubspec.yaml`
+
+```yaml
+dependencies:
+  uaepass_official: ^0.0.1
+````
+
+### 2. Fetch dependencies
+
+```bash
+flutter pub get
+```
+
+### 3. Import the package
+
+```dart
+import 'package:uaepass_official/uaepass_official.dart';';
+```
+
+---
+
+## ⚙️ Basic Usage
+
+### 🧑‍💻 Initialization
+
+```dart
+UaePassAPI uaePassAPI = UaePassAPI(
+  clientId: "<clientId>",
+  callbackUrl: "<callbackUrl>",
+  clientSecrete: "<clientSecrete>",
+  language: "en", // or 'ar'
+  isProduction: false,
+);
+```
+
+
+## 🧱 Class: `UaePassAPI`
+
+### Constructor Parameters:
+
+* `clientId` – Client ID provided by UAE Pass.
+* `callbackUrl` – URL the user is redirected to after authentication. Should use your app's URL scheme.
+* `clientSecrete` – Client secret issued by UAE Pass.
+* `isProduction` – If `true`, production URLs are used; otherwise, sandbox.
+* `language` – "en" or "ar" to toggle the UAE Pass page language.
+* `blockSOP1` – Blocks login for users of type `SOP1` (unauthorized).
+* `serviceProviderEnglishName` – Name shown in messages (English).
+* `serviceProviderArabicName` – Name shown in messages (Arabic).
+
+---
+
+## 🔐 Authentication Flow
+
+### `signIn(BuildContext context)`
+
+* Opens a `CustomWebView` to authenticate via UAE Pass.
+* Stores the returned code in `MemoryService.instance.accessCode`.
+
+### `_getURL()` *(private)*
+
+* Constructs a valid authorization URL depending on whether UAE Pass app is available or not.
+
+---
+
+## 🔄 Access Token
+
+### `getAccessToken(String code)`
+
+* Exchanges the code for a JWT access token.
+* Returns the token string on success, or `null` on failure.
+
+---
+
+## 👤 Get User Profile
+
+### `getUserProfile(String token, {required context})`
+
+* Fetches user's profile from UAE Pass.
+* If `blockSOP1 = true` and user is SOP1, shows a localized `SnackBar` and blocks further access.
+
+---
+
+## 🔓 Logout
+
+### `logout(BuildContext context)`
+
+* Opens logout URL in a `CustomWebView`.
+
+---
+
+## 📲 Example with Riverpod 2.0
+
+```dart
+@riverpod
+class UaePassController extends _$UaePassController {
+  UAEPASSUserProfile? _user;
+  String? _token;
+  late final UaePassAPI uaePassAPI;
+
+  @override
+  FutureOr<UAEPASSUserProfile?> build() {
+    uaePassAPI = UaePassAPI(
+      clientId: UAEPassConstant.uaePassClientId,
+      callbackUrl: UAEPassConstant.uaePassCallbackUrl,
+      clientSecrete: UAEPassConstant.uaePassClientSecret,
+      isProduction: !UAEPassConstant.uaePassIsStagingEnvironment,
+      blockSOP1: true,
+      language: 'en',
+      serviceProviderArabicName: UAEPassConstant.serviceProviderArabicName,
+      serviceProviderEnglishName: UAEPassConstant.serviceProviderEnglishName,
+    );
+    return null;
+  }
+
+  Future<void> signIn(BuildContext context) async {
+    try {
+      if (_token != null) {
+        await signOut(context);
+        return;
+      }
+
+      final code = await uaePassAPI.signIn(context);
+      if (code == null) return;
+
+      _token = await uaePassAPI.getAccessToken(code);
+      if (_token == null) return;
+
+      _user = await uaePassAPI.getUserProfile(_token!, context: context);
+      state = AsyncValue.data(_user);
+    } catch (e, s) {
+      debugPrint('UAEPass Sign-In Error: $e\n$s');
+      state = AsyncValue.error(e, s);
+    }
+  }
+
+  Future<void> signOut(BuildContext context) async {
+    await uaePassAPI.logout(context);
+    _clearState();
+  }
+
+  void reset() => _clearState();
+
+  void _clearState() {
+    _token = null;
+    _user = null;
+    state = const AsyncValue.data(null);
+  }
+
+  String? get token => _token;
+  UAEPASSUserProfile? get user => _user;
+}
+```
+
+---
+
+## 📱 Platform Setup
+
+### ✅ Android
+
+#### 1. Set `launchMode="singleTask"` in `AndroidManifest.xml`
+
+```xml
+<activity
+    android:name=".MainActivity"
+    android:launchMode="singleTask"
+    android:exported="true"
+    android:theme="@style/LaunchTheme"
+    android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+    android:hardwareAccelerated="true"
+    android:windowSoftInputMode="adjustResize">
+    ...
+</activity>
+```
+
+#### 2. Add intent filter
+
+```xml
+<intent-filter>
+    <action android:name="android.intent.action.VIEW" />
+    <category android:name="android.intent.category.DEFAULT" />
+    <category android:name="android.intent.category.BROWSABLE" />
+    <data
+        android:host="auth"
+        android:scheme="<your_app_scheme>" />
+</intent-filter>
+```
+ 
+
+### ✅ iOS
+
+#### Add the following in `Info.plist`
+
+```xml
+<key>LSApplicationQueriesSchemes</key>
+<array>
+  <string>uaepass</string>
+  <string>uaepassqa</string>
+  <string>uaepassdev</string>
+  <string>uaepassstg</string>
+</array>
+
+<key>CFBundleURLTypes</key>
+<array>
+  <dict>
+    <key>CFBundleTypeRole</key>
+    <string>Editor</string>
+    <key>CFBundleURLName</key>
+    <string>com.example.app</string>
+    <key>CFBundleURLSchemes</key>
+    <array>
+      <string><your_app_scheme></string>
+    </array>
+  </dict>
+</array>
+```
+
+---
+
+## 🔍 Notes
+
+* Ensure that the **callback scheme** (e.g., `<your_app_scheme>://auth`) is **registered/whitelisted** in the UAEPass admin panel.
+* SOP1 users are automatically rejected when `blockSOP1: true`.
+* Make sure `callbackUrl` and `clientId` are configured correctly in the UAEPass dashboard.
+* This package assumes use of a shared in-memory service (`MemoryService`) to store the temporary access code.
+
+---
+
+## 📚 Resources
+
+* [UAEPass Developer Portal](https://docs.uaepass.ae/)
+* [Common Integration Issues](https://docs.uaepass.ae/faq/common-integration-issues)
+* [Riverpod Docs](https://riverpod.dev/)
+
+---
+
+## 💡 Contributions
+
+Feel free to fork, improve and contribute via PR.
+
+---
+
+## 🧑‍💼 Maintainer
+
+**Midlaj Nazar**
+[GitHub](https://github.com/midhlajnazar) | Dubai, UAE
+
+```
+
+Let me know if you want a downloadable `.md` file or need additional sections like **License**, **FAQ**, or **Troubleshooting**.
+```
+
+
+
+================================================
+FILE: analysis_options.yaml
+================================================
+[Empty file]
+
+
+================================================
+FILE: CHANGELOG.md
+================================================
+## 0.0.4
+* Minor Bug Fixes
+
+## 0.0.3
+* Minor Readme Updates
+
+
+## 0.0.2
+* Minor Readme Updates
+
+## 0.0.1
+
+* Initial release.
+
+
+
+
+
+================================================
+FILE: LICENSE
+================================================
+MIT License
+
+Copyright (c) 2024
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+================================================
+FILE: pubspec.yaml
+================================================
+name: uaepass_official
+description: Flutter UAE PASS package for Authentication API (Login , Logout , Get user profile).
+
+version: 0.0.4
+
+homepage: https://github.com/midhlajnazar/uaepass_official
+repository: https://github.com/midhlajnazar/uaepass_official
+issue_tracker: https://github.com/midhlajnazar/uaepass_official/issues
+
+environment:
+  sdk: '>=3.3.4 <4.0.0'
+  flutter: ">=1.17.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  url_launcher: ^6.2.6
+  http: ^1.2.1
+  flutter_fgbg: ^0.6.0
+  webview_flutter: ^4.10.0
+  get_storage: ^2.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+
+
+================================================
+FILE: .flutter-plugins-dependencies
+================================================
+{"info":"This is a generated file; do not edit or check into version control.","plugins":{"ios":[{"name":"flutter_fgbg","path":"C:\\\\Users\\\\u211\\\\AppData\\\\Local\\\\Pub\\\\Cache\\\\hosted\\\\pub.dev\\\\flutter_fgbg-0.6.0\\\\","native_build":true,"dependencies":[],"dev_dependency":false},{"name":"path_provider_foundation","path":"C:\\\\Users\\\\u211\\\\AppData\\\\Local\\\\Pub\\\\Cache\\\\hosted\\\\pub.dev\\\\path_provider_foundation-2.4.1\\\\","shared_darwin_source":true,"native_build":true,"dependencies":[],"dev_dependency":false},{"name":"url_launcher_ios","path":"C:\\\\Users\\\\u211\\\\AppData\\\\Local\\\\Pub\\\\Cache\\\\hosted\\\\pub.dev\\\\url_launcher_ios-6.3.3\\\\","native_build":true,"dependencies":[],"dev_dependency":false},{"name":"webview_flutter_wkwebview","path":"C:\\\\Users\\\\u211\\\\AppData\\\\Local\\\\Pub\\\\Cache\\\\hosted\\\\pub.dev\\\\webview_flutter_wkwebview-3.22.1\\\\","shared_darwin_source":true,"native_build":true,"dependencies":[],"dev_dependency":false}],"android":[{"name":"flutter_fgbg","path":"C:\\\\Users\\\\u211\\\\AppData\\\\Local\\\\Pub\\\\Cache\\\\hosted\\\\pub.dev\\\\flutter_fgbg-0.6.0\\\\","native_build":true,"dependencies":[],"dev_dependency":false},{"name":"path_provider_android","path":"C:\\\\Users\\\\u211\\\\AppData\\\\Local\\\\Pub\\\\Cache\\\\hosted\\\\pub.dev\\\\path_provider_android-2.2.17\\\\","native_build":true,"dependencies":[],"dev_dependency":false},{"name":"url_launcher_android","path":"C:\\\\Users\\\\u211\\\\AppData\\\\Local\\\\Pub\\\\Cache\\\\hosted\\\\pub.dev\\\\url_launcher_android-6.3.16\\\\","native_build":true,"dependencies":[],"dev_dependency":false},{"name":"webview_flutter_android","path":"C:\\\\Users\\\\u211\\\\AppData\\\\Local\\\\Pub\\\\Cache\\\\hosted\\\\pub.dev\\\\webview_flutter_android-4.8.2\\\\","native_build":true,"dependencies":[],"dev_dependency":false}],"macos":[{"name":"path_provider_foundation","path":"C:\\\\Users\\\\u211\\\\AppData\\\\Local\\\\Pub\\\\Cache\\\\hosted\\\\pub.dev\\\\path_provider_foundation-2.4.1\\\\","shared_darwin_source":true,"native_build":true,"dependencies":[],"dev_dependency":false},{"name":"url_launcher_macos","path":"C:\\\\Users\\\\u211\\\\AppData\\\\Local\\\\Pub\\\\Cache\\\\hosted\\\\pub.dev\\\\url_launcher_macos-3.2.2\\\\","native_build":true,"dependencies":[],"dev_dependency":false},{"name":"webview_flutter_wkwebview","path":"C:\\\\Users\\\\u211\\\\AppData\\\\Local\\\\Pub\\\\Cache\\\\hosted\\\\pub.dev\\\\webview_flutter_wkwebview-3.22.1\\\\","shared_darwin_source":true,"native_build":true,"dependencies":[],"dev_dependency":false}],"linux":[{"name":"path_provider_linux","path":"C:\\\\Users\\\\u211\\\\AppData\\\\Local\\\\Pub\\\\Cache\\\\hosted\\\\pub.dev\\\\path_provider_linux-2.2.1\\\\","native_build":false,"dependencies":[],"dev_dependency":false},{"name":"url_launcher_linux","path":"C:\\\\Users\\\\u211\\\\AppData\\\\Local\\\\Pub\\\\Cache\\\\hosted\\\\pub.dev\\\\url_launcher_linux-3.2.1\\\\","native_build":true,"dependencies":[],"dev_dependency":false}],"windows":[{"name":"path_provider_windows","path":"C:\\\\Users\\\\u211\\\\AppData\\\\Local\\\\Pub\\\\Cache\\\\hosted\\\\pub.dev\\\\path_provider_windows-2.3.0\\\\","native_build":false,"dependencies":[],"dev_dependency":false},{"name":"url_launcher_windows","path":"C:\\\\Users\\\\u211\\\\AppData\\\\Local\\\\Pub\\\\Cache\\\\hosted\\\\pub.dev\\\\url_launcher_windows-3.1.4\\\\","native_build":true,"dependencies":[],"dev_dependency":false}],"web":[{"name":"url_launcher_web","path":"C:\\\\Users\\\\u211\\\\AppData\\\\Local\\\\Pub\\\\Cache\\\\hosted\\\\pub.dev\\\\url_launcher_web-2.4.1\\\\","dependencies":[],"dev_dependency":false}]},"dependencyGraph":[{"name":"flutter_fgbg","dependencies":[]},{"name":"path_provider","dependencies":["path_provider_android","path_provider_foundation","path_provider_linux","path_provider_windows"]},{"name":"path_provider_android","dependencies":[]},{"name":"path_provider_foundation","dependencies":[]},{"name":"path_provider_linux","dependencies":[]},{"name":"path_provider_windows","dependencies":[]},{"name":"url_launcher","dependencies":["url_launcher_android","url_launcher_ios","url_launcher_linux","url_launcher_macos","url_launcher_web","url_launcher_windows"]},{"name":"url_launcher_android","dependencies":[]},{"name":"url_launcher_ios","dependencies":[]},{"name":"url_launcher_linux","dependencies":[]},{"name":"url_launcher_macos","dependencies":[]},{"name":"url_launcher_web","dependencies":[]},{"name":"url_launcher_windows","dependencies":[]},{"name":"webview_flutter","dependencies":["webview_flutter_android","webview_flutter_wkwebview"]},{"name":"webview_flutter_android","dependencies":[]},{"name":"webview_flutter_wkwebview","dependencies":[]}],"date_created":"2025-07-25 11:13:30.084735","version":"3.32.7","swift_package_manager_enabled":{"ios":false,"macos":false}}
+
+
+================================================
+FILE: .metadata
+================================================
+# This file tracks properties of this Flutter project.
+# Used by Flutter tool to assess capabilities and perform upgrades etc.
+#
+# This file should be version controlled and should not be manually edited.
+
+version:
+  revision: "d7b523b356d15fb81e7d340bbe52b47f93937323"
+  channel: "stable"
+
+project_type: package
+
+
+
+================================================
+FILE: example/README.md
+================================================
+# example
+
+A new Flutter project.
+
+## Getting Started
+
+This project is a starting point for a Flutter application.
+
+
+
+================================================
+FILE: example/analysis_options.yaml
+================================================
+# This file configures the analyzer, which statically analyzes Dart code to
+# check for errors, warnings, and lints.
+#
+# The issues identified by the analyzer are surfaced in the UI of Dart-enabled
+# IDEs (https://dart.dev/tools#ides-and-editors). The analyzer can also be
+# invoked from the command line by running `flutter analyze`.
+
+# The following line activates a set of recommended lints for Flutter apps,
+# packages, and plugins designed to encourage good coding practices.
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  # The lint rules applied to this project can be customized in the
+  # section below to disable rules from the `package:flutter_lints/flutter.yaml`
+  # included above or to enable additional rules. A list of all available lints
+  # and their documentation is published at https://dart.dev/lints.
+  #
+  # Instead of disabling a lint rule for the entire project in the
+  # section below, it can also be suppressed for a single line of code
+  # or a specific dart file by using the `// ignore: name_of_lint` and
+  # `// ignore_for_file: name_of_lint` syntax on the line or in the file
+  # producing the lint.
+  rules:
+    # avoid_print: false  # Uncomment to disable the `avoid_print` rule
+    # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
+
+# Additional information about this file can be found at
+# https://dart.dev/guides/language/analysis-options
+
+
+
+================================================
+FILE: example/pubspec.lock
+================================================
+# Generated by pub
+# See https://dart.dev/tools/pub/glossary#lockfile
+packages:
+  async:
+    dependency: transitive
+    description:
+      name: async
+      sha256: "758e6d74e971c3e5aceb4110bfd6698efc7f501675bcfe0c775459a8140750eb"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.13.0"
+  boolean_selector:
+    dependency: transitive
+    description:
+      name: boolean_selector
+      sha256: "8aab1771e1243a5063b8b0ff68042d67334e3feab9e95b9490f9a6ebf73b42ea"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.2"
+  characters:
+    dependency: transitive
+    description:
+      name: characters
+      sha256: f71061c654a3380576a52b451dd5532377954cf9dbd272a78fc8479606670803
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.4.0"
+  clock:
+    dependency: transitive
+    description:
+      name: clock
+      sha256: fddb70d9b5277016c77a80201021d40a2247104d9f4aa7bab7157b7e3f05b84b
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.2"
+  collection:
+    dependency: transitive
+    description:
+      name: collection
+      sha256: "2f5709ae4d3d59dd8f7cd309b4e023046b57d8a6c82130785d2b0e5868084e76"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.19.1"
+  cupertino_icons:
+    dependency: "direct main"
+    description:
+      name: cupertino_icons
+      sha256: ba631d1c7f7bef6b729a622b7b752645a2d076dba9976925b8f25725a30e1ee6
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.8"
+  fake_async:
+    dependency: transitive
+    description:
+      name: fake_async
+      sha256: "5368f224a74523e8d2e7399ea1638b37aecfca824a3cc4dfdf77bf1fa905ac44"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.3.3"
+  ffi:
+    dependency: transitive
+    description:
+      name: ffi
+      sha256: "16ed7b077ef01ad6170a3d0c57caa4a112a38d7a2ed5602e0aca9ca6f3d98da6"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.3"
+  flutter:
+    dependency: "direct main"
+    description: flutter
+    source: sdk
+    version: "0.0.0"
+  flutter_fgbg:
+    dependency: transitive
+    description:
+      name: flutter_fgbg
+      sha256: e02ad0738ba5fc7f331b62acb0d74aa540626a6441ae18fad685faa5ac4ad7a5
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.6.0"
+  flutter_test:
+    dependency: "direct dev"
+    description: flutter
+    source: sdk
+    version: "0.0.0"
+  flutter_web_plugins:
+    dependency: transitive
+    description: flutter
+    source: sdk
+    version: "0.0.0"
+  get:
+    dependency: transitive
+    description:
+      name: get
+      sha256: c79eeb4339f1f3deffd9ec912f8a923834bec55f7b49c9e882b8fef2c139d425
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.7.2"
+  get_storage:
+    dependency: transitive
+    description:
+      name: get_storage
+      sha256: "39db1fffe779d0c22b3a744376e86febe4ade43bf65e06eab5af707dc84185a2"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.1"
+  http:
+    dependency: transitive
+    description:
+      name: http
+      sha256: "761a297c042deedc1ffbb156d6e2af13886bb305c2a343a4d972504cd67dd938"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.1"
+  http_parser:
+    dependency: transitive
+    description:
+      name: http_parser
+      sha256: "2aa08ce0341cc9b354a498388e30986515406668dbcc4f7c950c3e715496693b"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.0.2"
+  leak_tracker:
+    dependency: transitive
+    description:
+      name: leak_tracker
+      sha256: "6bb818ecbdffe216e81182c2f0714a2e62b593f4a4f13098713ff1685dfb6ab0"
+      url: "https://pub.dev"
+    source: hosted
+    version: "10.0.9"
+  leak_tracker_flutter_testing:
+    dependency: transitive
+    description:
+      name: leak_tracker_flutter_testing
+      sha256: f8b613e7e6a13ec79cfdc0e97638fddb3ab848452eff057653abd3edba760573
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.9"
+  leak_tracker_testing:
+    dependency: transitive
+    description:
+      name: leak_tracker_testing
+      sha256: "6ba465d5d76e67ddf503e1161d1f4a6bc42306f9d66ca1e8f079a47290fb06d3"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.1"
+  matcher:
+    dependency: transitive
+    description:
+      name: matcher
+      sha256: dc58c723c3c24bf8d3e2d3ad3f2f9d7bd9cf43ec6feaa64181775e60190153f2
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.12.17"
+  material_color_utilities:
+    dependency: transitive
+    description:
+      name: material_color_utilities
+      sha256: f7142bb1154231d7ea5f96bc7bde4bda2a0945d2806bb11670e30b850d56bdec
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.11.1"
+  meta:
+    dependency: transitive
+    description:
+      name: meta
+      sha256: e3641ec5d63ebf0d9b41bd43201a66e3fc79a65db5f61fc181f04cd27aab950c
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.16.0"
+  path:
+    dependency: transitive
+    description:
+      name: path
+      sha256: "75cca69d1490965be98c73ceaea117e8a04dd21217b37b292c9ddbec0d955bc5"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.9.1"
+  path_provider:
+    dependency: transitive
+    description:
+      name: path_provider
+      sha256: "50c5dd5b6e1aaf6fb3a78b33f6aa3afca52bf903a8a5298f53101fdaee55bbcd"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.5"
+  path_provider_android:
+    dependency: transitive
+    description:
+      name: path_provider_android
+      sha256: "4adf4fd5423ec60a29506c76581bc05854c55e3a0b72d35bb28d661c9686edf2"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.2.15"
+  path_provider_foundation:
+    dependency: transitive
+    description:
+      name: path_provider_foundation
+      sha256: "4843174df4d288f5e29185bd6e72a6fbdf5a4a4602717eed565497429f179942"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.4.1"
+  path_provider_linux:
+    dependency: transitive
+    description:
+      name: path_provider_linux
+      sha256: f7a1fe3a634fe7734c8d3f2766ad746ae2a2884abe22e241a8b301bf5cac3279
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.2.1"
+  path_provider_platform_interface:
+    dependency: transitive
+    description:
+      name: path_provider_platform_interface
+      sha256: "88f5779f72ba699763fa3a3b06aa4bf6de76c8e5de842cf6f29e2e06476c2334"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.2"
+  path_provider_windows:
+    dependency: transitive
+    description:
+      name: path_provider_windows
+      sha256: bd6f00dbd873bfb70d0761682da2b3a2c2fccc2b9e84c495821639601d81afe7
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.3.0"
+  platform:
+    dependency: transitive
+    description:
+      name: platform
+      sha256: "5d6b1b0036a5f331ebc77c850ebc8506cbc1e9416c27e59b439f917a902a4984"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.6"
+  plugin_platform_interface:
+    dependency: transitive
+    description:
+      name: plugin_platform_interface
+      sha256: "4820fbfdb9478b1ebae27888254d445073732dae3d6ea81f0b7e06d5dedc3f02"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.8"
+  sky_engine:
+    dependency: transitive
+    description: flutter
+    source: sdk
+    version: "0.0.0"
+  source_span:
+    dependency: transitive
+    description:
+      name: source_span
+      sha256: "254ee5351d6cb365c859e20ee823c3bb479bf4a293c22d17a9f1bf144ce86f7c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.10.1"
+  stack_trace:
+    dependency: transitive
+    description:
+      name: stack_trace
+      sha256: "8b27215b45d22309b5cddda1aa2b19bdfec9df0e765f2de506401c071d38d1b1"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.12.1"
+  stream_channel:
+    dependency: transitive
+    description:
+      name: stream_channel
+      sha256: "969e04c80b8bcdf826f8f16579c7b14d780458bd97f56d107d3950fdbeef059d"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.4"
+  string_scanner:
+    dependency: transitive
+    description:
+      name: string_scanner
+      sha256: "921cd31725b72fe181906c6a94d987c78e3b98c2e205b397ea399d4054872b43"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.4.1"
+  term_glyph:
+    dependency: transitive
+    description:
+      name: term_glyph
+      sha256: "7f554798625ea768a7518313e58f83891c7f5024f88e46e7182a4558850a4b8e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.2"
+  test_api:
+    dependency: transitive
+    description:
+      name: test_api
+      sha256: fb31f383e2ee25fbbfe06b40fe21e1e458d14080e3c67e7ba0acfde4df4e0bbd
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.7.4"
+  typed_data:
+    dependency: transitive
+    description:
+      name: typed_data
+      sha256: facc8d6582f16042dd49f2463ff1bd6e2c9ef9f3d5da3d9b087e244a7b564b3c
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.3.2"
+  uaepass_official:
+    dependency: "direct main"
+    description:
+      path: ".."
+      relative: true
+    source: path
+    version: "1.0.3"
+  url_launcher:
+    dependency: transitive
+    description:
+      name: url_launcher
+      sha256: "21b704ce5fa560ea9f3b525b43601c678728ba46725bab9b01187b4831377ed3"
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.3.0"
+  url_launcher_android:
+    dependency: transitive
+    description:
+      name: url_launcher_android
+      sha256: "17cd5e205ea615e2c6ea7a77323a11712dffa0720a8a90540db57a01347f9ad9"
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.3.2"
+  url_launcher_ios:
+    dependency: transitive
+    description:
+      name: url_launcher_ios
+      sha256: "7068716403343f6ba4969b4173cbf3b84fc768042124bc2c011e5d782b24fe89"
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.3.0"
+  url_launcher_linux:
+    dependency: transitive
+    description:
+      name: url_launcher_linux
+      sha256: ab360eb661f8879369acac07b6bb3ff09d9471155357da8443fd5d3cf7363811
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.1"
+  url_launcher_macos:
+    dependency: transitive
+    description:
+      name: url_launcher_macos
+      sha256: "9a1a42d5d2d95400c795b2914c36fdcb525870c752569438e4ebb09a2b5d90de"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.2.0"
+  url_launcher_platform_interface:
+    dependency: transitive
+    description:
+      name: url_launcher_platform_interface
+      sha256: "552f8a1e663569be95a8190206a38187b531910283c3e982193e4f2733f01029"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.3.2"
+  url_launcher_web:
+    dependency: transitive
+    description:
+      name: url_launcher_web
+      sha256: "8d9e750d8c9338601e709cd0885f95825086bd8b642547f26bda435aade95d8a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.3.1"
+  url_launcher_windows:
+    dependency: transitive
+    description:
+      name: url_launcher_windows
+      sha256: ecf9725510600aa2bb6d7ddabe16357691b6d2805f66216a97d1b881e21beff7
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.1"
+  vector_math:
+    dependency: transitive
+    description:
+      name: vector_math
+      sha256: "80b3257d1492ce4d091729e3a67a60407d227c27241d6927be0130c98e741803"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.4"
+  vm_service:
+    dependency: transitive
+    description:
+      name: vm_service
+      sha256: ddfa8d30d89985b96407efce8acbdd124701f96741f2d981ca860662f1c0dc02
+      url: "https://pub.dev"
+    source: hosted
+    version: "15.0.0"
+  web:
+    dependency: transitive
+    description:
+      name: web
+      sha256: "97da13628db363c635202ad97068d47c5b8aa555808e7a9411963c533b449b27"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.5.1"
+  webview_flutter:
+    dependency: transitive
+    description:
+      name: webview_flutter
+      sha256: c3e4fe614b1c814950ad07186007eff2f2e5dd2935eba7b9a9a1af8e5885f1ba
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.13.0"
+  webview_flutter_android:
+    dependency: transitive
+    description:
+      name: webview_flutter_android
+      sha256: "9573ad97890d199ac3ab32399aa33a5412163b37feb573eb5b0a76b35e9ffe41"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.8.2"
+  webview_flutter_platform_interface:
+    dependency: transitive
+    description:
+      name: webview_flutter_platform_interface
+      sha256: f0dc2dc3a2b1e3a6abdd6801b9355ebfeb3b8f6cde6b9dc7c9235909c4a1f147
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.13.1"
+  webview_flutter_wkwebview:
+    dependency: transitive
+    description:
+      name: webview_flutter_wkwebview
+      sha256: "71523b9048cf510cfa1fd4e0a3fa5e476a66e0884d5df51d59d5023dba237107"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.22.1"
+  xdg_directories:
+    dependency: transitive
+    description:
+      name: xdg_directories
+      sha256: "7a3f37b05d989967cdddcbb571f1ea834867ae2faa29725fd085180e0883aa15"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.0"
+sdks:
+  dart: ">=3.7.0-0 <4.0.0"
+  flutter: ">=3.27.0"
+
+
+
+================================================
+FILE: example/pubspec.yaml
+================================================
+name: uaepass_example
+description: "A UAEPASS example Flutter project."
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+environment:
+  sdk: '>=3.3.4 <4.0.0'
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+  uaepass_official: 
+      path: ../../uaepass_official  
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+
+
+
+================================================
+FILE: example/.metadata
+================================================
+# This file tracks properties of this Flutter project.
+# Used by Flutter tool to assess capabilities and perform upgrades etc.
+#
+# This file should be version controlled and should not be manually edited.
+
+version:
+  revision: "54e66469a933b60ddf175f858f82eaeb97e48c8d"
+  channel: "stable"
+
+project_type: app
+
+# Tracks metadata for the flutter migrate command
+migration:
+  platforms:
+    - platform: root
+      create_revision: 54e66469a933b60ddf175f858f82eaeb97e48c8d
+      base_revision: 54e66469a933b60ddf175f858f82eaeb97e48c8d
+    - platform: android
+      create_revision: 54e66469a933b60ddf175f858f82eaeb97e48c8d
+      base_revision: 54e66469a933b60ddf175f858f82eaeb97e48c8d
+    - platform: ios
+      create_revision: 54e66469a933b60ddf175f858f82eaeb97e48c8d
+      base_revision: 54e66469a933b60ddf175f858f82eaeb97e48c8d
+    - platform: linux
+      create_revision: 54e66469a933b60ddf175f858f82eaeb97e48c8d
+      base_revision: 54e66469a933b60ddf175f858f82eaeb97e48c8d
+    - platform: macos
+      create_revision: 54e66469a933b60ddf175f858f82eaeb97e48c8d
+      base_revision: 54e66469a933b60ddf175f858f82eaeb97e48c8d
+    - platform: web
+      create_revision: 54e66469a933b60ddf175f858f82eaeb97e48c8d
+      base_revision: 54e66469a933b60ddf175f858f82eaeb97e48c8d
+    - platform: windows
+      create_revision: 54e66469a933b60ddf175f858f82eaeb97e48c8d
+      base_revision: 54e66469a933b60ddf175f858f82eaeb97e48c8d
+
+  # User provided section
+
+  # List of Local paths (relative to this file) that should be
+  # ignored by the migrate tool.
+  #
+  # Files that are not part of the templates will be ignored by default.
+  unmanaged_files:
+    - 'lib/main.dart'
+    - 'ios/Runner.xcodeproj/project.pbxproj'
+
+
+
+================================================
+FILE: example/android/gradle.properties
+================================================
+org.gradle.jvmargs=-Xmx4G
+android.useAndroidX=true
+android.enableJetifier=true
+
+
+
+================================================
+FILE: example/android/app/src/debug/AndroidManifest.xml
+================================================
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- The INTERNET permission is required for development. Specifically,
+         the Flutter tool needs it to communicate with the running application
+         to allow setting breakpoints, to provide hot reload, etc.
+    -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+</manifest>
+
+
+
+================================================
+FILE: example/android/app/src/main/AndroidManifest.xml
+================================================
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <application
+        android:label="example"
+        android:name="${applicationName}"
+        android:icon="@mipmap/ic_launcher">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+            <!-- Specifies an Android theme to apply to this Activity as soon as
+                 the Android process has started. This theme is visible to the user
+                 while the Flutter UI initializes. After that, this theme continues
+                 to determine the Window background behind the Flutter UI. -->
+            <meta-data
+              android:name="io.flutter.embedding.android.NormalTheme"
+              android:resource="@style/NormalTheme"
+              />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+
+            <intent-filter >
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="auth"
+                    android:scheme="exampleScheme" /> 
+
+            </intent-filter>
+
+        </activity>
+        <!-- Don't delete the meta-data below.
+             This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+    </application>
+    <!-- Required to query activities that can process text, see:
+         https://developer.android.com/training/package-visibility?hl=en and
+         https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
+
+         In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT"/>
+            <data android:mimeType="text/plain"/>
+        </intent>
+    </queries>
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+        <package android:name="ae.uaepass.mainapp" />
+        <package android:name="ae.uaepass.mainapp.stg" />
+    </queries>
+</manifest>
+
+
+
+================================================
+FILE: example/android/app/src/main/kotlin/com/example/example/MainActivity.kt
+================================================
+package com.example.example
+
+import io.flutter.embedding.android.FlutterActivity
+
+class MainActivity: FlutterActivity()
+
+
+
+================================================
+FILE: example/android/app/src/main/res/drawable/launch_background.xml
+================================================
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Modify this file to customize your launch splash screen -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@android:color/white" />
+
+    <!-- You can insert your own image assets here -->
+    <!-- <item>
+        <bitmap
+            android:gravity="center"
+            android:src="@mipmap/launch_image" />
+    </item> -->
+</layer-list>
+
+
+
+================================================
+FILE: example/android/app/src/main/res/drawable-v21/launch_background.xml
+================================================
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Modify this file to customize your launch splash screen -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="?android:colorBackground" />
+
+    <!-- You can insert your own image assets here -->
+    <!-- <item>
+        <bitmap
+            android:gravity="center"
+            android:src="@mipmap/launch_image" />
+    </item> -->
+</layer-list>
+
+
+
+================================================
+FILE: example/android/app/src/main/res/values/styles.xml
+================================================
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Theme applied to the Android Window while the process is starting when the OS's Dark Mode setting is off -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <!-- Show a splash screen on the activity. Automatically removed when
+             the Flutter engine draws its first frame -->
+        <item name="android:windowBackground">@drawable/launch_background</item>
+    </style>
+    <!-- Theme applied to the Android Window as soon as the process has started.
+         This theme determines the color of the Android Window while your
+         Flutter UI initializes, as well as behind your Flutter UI while its
+         running.
+
+         This Theme is only used starting with V2 of Flutter's Android embedding. -->
+    <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">?android:colorBackground</item>
+    </style>
+</resources>
+
+
+
+================================================
+FILE: example/android/app/src/main/res/values-night/styles.xml
+================================================
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Theme applied to the Android Window while the process is starting when the OS's Dark Mode setting is on -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <!-- Show a splash screen on the activity. Automatically removed when
+             the Flutter engine draws its first frame -->
+        <item name="android:windowBackground">@drawable/launch_background</item>
+    </style>
+    <!-- Theme applied to the Android Window as soon as the process has started.
+         This theme determines the color of the Android Window while your
+         Flutter UI initializes, as well as behind your Flutter UI while its
+         running.
+
+         This Theme is only used starting with V2 of Flutter's Android embedding. -->
+    <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">?android:colorBackground</item>
+    </style>
+</resources>
+
+
+
+================================================
+FILE: example/android/app/src/profile/AndroidManifest.xml
+================================================
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- The INTERNET permission is required for development. Specifically,
+         the Flutter tool needs it to communicate with the running application
+         to allow setting breakpoints, to provide hot reload, etc.
+    -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+</manifest>
+
+
+
+================================================
+FILE: example/android/gradle/wrapper/gradle-wrapper.properties
+================================================
+distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
+distributionUrl=https\://services.gradle.org/distributions/gradle-7.6.3-all.zip
+
+
+
+================================================
+FILE: example/ios/Podfile
+================================================
+# Uncomment this line to define a global platform for your project
+# platform :ios, '12.0'
+
+# CocoaPods analytics sends network stats synchronously affecting flutter build latency.
+ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+
+project 'Runner', {
+  'Debug' => :debug,
+  'Profile' => :release,
+  'Release' => :release,
+}
+
+def flutter_root
+  generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__)
+  unless File.exist?(generated_xcode_build_settings_path)
+    raise "#{generated_xcode_build_settings_path} must exist. If you're running pod install manually, make sure flutter pub get is executed first"
+  end
+
+  File.foreach(generated_xcode_build_settings_path) do |line|
+    matches = line.match(/FLUTTER_ROOT\=(.*)/)
+    return matches[1].strip if matches
+  end
+  raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Generated.xcconfig, then run flutter pub get"
+end
+
+require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
+
+flutter_ios_podfile_setup
+
+target 'Runner' do
+  use_frameworks!
+  use_modular_headers!
+
+  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+  target 'RunnerTests' do
+    inherit! :search_paths
+  end
+end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    flutter_additional_ios_build_settings(target)
+  end
+end
+
+
+
+================================================
+FILE: example/ios/Podfile.lock
+================================================
+PODS:
+  - Flutter (1.0.0)
+  - flutter_fgbg (0.0.1):
+    - Flutter
+  - flutter_inappwebview_ios (0.0.1):
+    - Flutter
+    - flutter_inappwebview_ios/Core (= 0.0.1)
+    - OrderedSet (~> 5.0)
+  - flutter_inappwebview_ios/Core (0.0.1):
+    - Flutter
+    - OrderedSet (~> 5.0)
+  - OrderedSet (5.0.0)
+  - path_provider_foundation (0.0.1):
+    - Flutter
+    - FlutterMacOS
+  - url_launcher_ios (0.0.1):
+    - Flutter
+
+DEPENDENCIES:
+  - Flutter (from `Flutter`)
+  - flutter_fgbg (from `.symlinks/plugins/flutter_fgbg/ios`)
+  - flutter_inappwebview_ios (from `.symlinks/plugins/flutter_inappwebview_ios/ios`)
+  - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
+  - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
+
+SPEC REPOS:
+  trunk:
+    - OrderedSet
+
+EXTERNAL SOURCES:
+  Flutter:
+    :path: Flutter
+  flutter_fgbg:
+    :path: ".symlinks/plugins/flutter_fgbg/ios"
+  flutter_inappwebview_ios:
+    :path: ".symlinks/plugins/flutter_inappwebview_ios/ios"
+  path_provider_foundation:
+    :path: ".symlinks/plugins/path_provider_foundation/darwin"
+  url_launcher_ios:
+    :path: ".symlinks/plugins/url_launcher_ios/ios"
+
+SPEC CHECKSUMS:
+  Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
+  flutter_fgbg: 31c0d1140a131daea2d342121808f6aa0dcd879d
+  flutter_inappwebview_ios: 97215cf7d4677db55df76782dbd2930c5e1c1ea0
+  OrderedSet: aaeb196f7fef5a9edf55d89760da9176ad40b93c
+  path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
+  url_launcher_ios: 5334b05cef931de560670eeae103fd3e431ac3fe
+
+PODFILE CHECKSUM: 819463e6a0290f5a72f145ba7cde16e8b6ef0796
+
+COCOAPODS: 1.13.0
+
+
+
+================================================
+FILE: example/ios/Flutter/AppFrameworkInfo.plist
+================================================
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleDevelopmentRegion</key>
+  <string>en</string>
+  <key>CFBundleExecutable</key>
+  <string>App</string>
+  <key>CFBundleIdentifier</key>
+  <string>io.flutter.flutter.app</string>
+  <key>CFBundleInfoDictionaryVersion</key>
+  <string>6.0</string>
+  <key>CFBundleName</key>
+  <string>App</string>
+  <key>CFBundlePackageType</key>
+  <string>FMWK</string>
+  <key>CFBundleShortVersionString</key>
+  <string>1.0</string>
+  <key>CFBundleSignature</key>
+  <string>????</string>
+  <key>CFBundleVersion</key>
+  <string>1.0</string>
+  <key>MinimumOSVersion</key>
+  <string>12.0</string>
+</dict>
+</plist>
+
+
+
+================================================
+FILE: example/ios/Flutter/Debug.xcconfig
+================================================
+#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"
+#include "Generated.xcconfig"
+
+
+
+================================================
+FILE: example/ios/Flutter/Release.xcconfig
+================================================
+#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
+#include "Generated.xcconfig"
+
+
+
+================================================
+FILE: example/ios/Runner/AppDelegate.swift
+================================================
+import UIKit
+import Flutter
+
+@main
+@objc class AppDelegate: FlutterAppDelegate {
+  override func application(
+    _ application: UIApplication,
+    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+  ) -> Bool {
+    GeneratedPluginRegistrant.register(with: self)
+    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+}
+
+
+
+================================================
+FILE: example/ios/Runner/Info.plist
+================================================
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>Example</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>example</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(FLUTTER_BUILD_NAME)</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>exampleScheme</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>exampleScheme</string>
+			</array>
+		</dict>
+	</array>
+	<key>CFBundleVersion</key>
+	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>uaepass</string>
+		<string>uaepassqa</string>
+		<string>uaepassdev</string>
+		<string>uaepassstg</string>
+	</array>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+</dict>
+</plist>
+
+
+
+================================================
+FILE: example/ios/Runner/Runner-Bridging-Header.h
+================================================
+#import "GeneratedPluginRegistrant.h"
+
+
+
+================================================
+FILE: example/ios/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json
+================================================
+{
+  "images" : [
+    {
+      "size" : "20x20",
+      "idiom" : "iphone",
+      "filename" : "Icon-App-20x20@2x.png",
+      "scale" : "2x"
+    },
+    {
+      "size" : "20x20",
+      "idiom" : "iphone",
+      "filename" : "Icon-App-20x20@3x.png",
+      "scale" : "3x"
+    },
+    {
+      "size" : "29x29",
+      "idiom" : "iphone",
+      "filename" : "Icon-App-29x29@1x.png",
+      "scale" : "1x"
+    },
+    {
+      "size" : "29x29",
+      "idiom" : "iphone",
+      "filename" : "Icon-App-29x29@2x.png",
+      "scale" : "2x"
+    },
+    {
+      "size" : "29x29",
+      "idiom" : "iphone",
+      "filename" : "Icon-App-29x29@3x.png",
+      "scale" : "3x"
+    },
+    {
+      "size" : "40x40",
+      "idiom" : "iphone",
+      "filename" : "Icon-App-40x40@2x.png",
+      "scale" : "2x"
+    },
+    {
+      "size" : "40x40",
+      "idiom" : "iphone",
+      "filename" : "Icon-App-40x40@3x.png",
+      "scale" : "3x"
+    },
+    {
+      "size" : "60x60",
+      "idiom" : "iphone",
+      "filename" : "Icon-App-60x60@2x.png",
+      "scale" : "2x"
+    },
+    {
+      "size" : "60x60",
+      "idiom" : "iphone",
+      "filename" : "Icon-App-60x60@3x.png",
+      "scale" : "3x"
+    },
+    {
+      "size" : "20x20",
+      "idiom" : "ipad",
+      "filename" : "Icon-App-20x20@1x.png",
+      "scale" : "1x"
+    },
+    {
+      "size" : "20x20",
+      "idiom" : "ipad",
+      "filename" : "Icon-App-20x20@2x.png",
+      "scale" : "2x"
+    },
+    {
+      "size" : "29x29",
+      "idiom" : "ipad",
+      "filename" : "Icon-App-29x29@1x.png",
+      "scale" : "1x"
+    },
+    {
+      "size" : "29x29",
+      "idiom" : "ipad",
+      "filename" : "Icon-App-29x29@2x.png",
+      "scale" : "2x"
+    },
+    {
+      "size" : "40x40",
+      "idiom" : "ipad",
+      "filename" : "Icon-App-40x40@1x.png",
+      "scale" : "1x"
+    },
+    {
+      "size" : "40x40",
+      "idiom" : "ipad",
+      "filename" : "Icon-App-40x40@2x.png",
+      "scale" : "2x"
+    },
+    {
+      "size" : "76x76",
+      "idiom" : "ipad",
+      "filename" : "Icon-App-76x76@1x.png",
+      "scale" : "1x"
+    },
+    {
+      "size" : "76x76",
+      "idiom" : "ipad",
+      "filename" : "Icon-App-76x76@2x.png",
+      "scale" : "2x"
+    },
+    {
+      "size" : "83.5x83.5",
+      "idiom" : "ipad",
+      "filename" : "Icon-App-83.5x83.5@2x.png",
+      "scale" : "2x"
+    },
+    {
+      "size" : "1024x1024",
+      "idiom" : "ios-marketing",
+      "filename" : "Icon-App-1024x1024@1x.png",
+      "scale" : "1x"
+    }
+  ],
+  "info" : {
+    "version" : 1,
+    "author" : "xcode"
+  }
+}
+
+
+
+================================================
+FILE: example/ios/Runner/Assets.xcassets/LaunchImage.imageset/README.md
+================================================
+# Launch Screen Assets
+
+You can customize the launch screen with your own desired assets by replacing the image files in this directory.
+
+You can also do it by opening your Flutter project's Xcode project with `open ios/Runner.xcworkspace`, selecting `Runner/Assets.xcassets` in the Project Navigator and dropping in the desired images.
+
+
+================================================
+FILE: example/ios/Runner/Assets.xcassets/LaunchImage.imageset/Contents.json
+================================================
+{
+  "images" : [
+    {
+      "idiom" : "universal",
+      "filename" : "LaunchImage.png",
+      "scale" : "1x"
+    },
+    {
+      "idiom" : "universal",
+      "filename" : "LaunchImage@2x.png",
+      "scale" : "2x"
+    },
+    {
+      "idiom" : "universal",
+      "filename" : "LaunchImage@3x.png",
+      "scale" : "3x"
+    }
+  ],
+  "info" : {
+    "version" : 1,
+    "author" : "xcode"
+  }
+}
+
+
+
+================================================
+FILE: example/ios/Runner/Base.lproj/LaunchScreen.storyboard
+================================================
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="12121" systemVersion="16G29" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
+    </dependencies>
+    <scenes>
+        <!--View Controller-->
+        <scene sceneID="EHf-IW-A2E">
+            <objects>
+                <viewController id="01J-lp-oVM" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="Ydg-fD-yQy"/>
+                        <viewControllerLayoutGuide type="bottom" id="xbc-2k-c8Z"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="LaunchImage" translatesAutoresizingMaskIntoConstraints="NO" id="YRO-k0-Ey4">
+                            </imageView>
+                        </subviews>
+                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                            <constraint firstItem="YRO-k0-Ey4" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="1a2-6s-vTC"/>
+                            <constraint firstItem="YRO-k0-Ey4" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="4X2-HB-R7a"/>
+                        </constraints>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="53" y="375"/>
+        </scene>
+    </scenes>
+    <resources>
+        <image name="LaunchImage" width="168" height="185"/>
+    </resources>
+</document>
+
+
+
+================================================
+FILE: example/ios/Runner/Base.lproj/Main.storyboard
+================================================
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="10117" systemVersion="15F34" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="BYZ-38-t0r">
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
+    </dependencies>
+    <scenes>
+        <!--Flutter View Controller-->
+        <scene sceneID="tne-QT-ifu">
+            <objects>
+                <viewController id="BYZ-38-t0r" customClass="FlutterViewController" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="y3c-jy-aDJ"/>
+                        <viewControllerLayoutGuide type="bottom" id="wfy-db-euE"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
+                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
+            </objects>
+        </scene>
+    </scenes>
+</document>
+
+
+
+================================================
+FILE: example/ios/RunnerTests/RunnerTests.swift
+================================================
+import Flutter
+import UIKit
+import XCTest
+
+class RunnerTests: XCTestCase {
+
+  func testExample() {
+    // If you add code to the Runner application, consider adding tests here.
+    // See https://developer.apple.com/documentation/xctest for more information about using XCTest.
+  }
+
+}
+
+
+
+================================================
+FILE: example/lib/main.dart
+================================================
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:uaepass_official/uaepass_official.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+/// The root widget of the application.
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'UAE PASS Demo',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
+        useMaterial3: true,
+      ),
+      home: const MyHomePage(title: 'UAE PASS Demo'),
+    );
+  }
+}
+
+/// The home screen of the application.
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key, required this.title});
+
+  /// The title of the app bar.
+  final String title;
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  /// Stores the access token received after successful login.
+  String? _token;
+
+  /// Stores the user profile information after successful login.
+  UAEPASSUserProfile? _user;
+
+  // ---------------- UAE PASS Credentials ----------------
+
+  /// Client ID for staging environment (for development/testing).
+  final String stagingClientId = 'ClientIdStaging';
+
+  /// Client secret for staging environment.
+  final String stagingClientSecret = '123456789';
+
+  /// Client ID for production environment.
+  final String productionClientId = 'ClientIdProduction';
+
+  /// Client secret for production environment.
+  final String prodClientSecret = '123456789';
+
+  /// The name of the service provider (must be registered with UAE PASS).
+  final String spcName = 'ServiceProviderName';
+
+  /// The callback URI registered for your app with UAE PASS.
+  final String callbackUrl = 'someapp://auth';
+
+  /// Instance of UAE PASS API.
+  late UaePassAPI uaePassAPI;
+
+  /// Toggles login and logout with UAE PASS.
+  ///
+  /// If already logged in, this will log the user out.
+  /// Otherwise, it will initiate the UAE PASS login flow.
+  void _loginOrLogout() async {
+    // Initialize the UAE PASS API client
+    uaePassAPI = UaePassAPI(
+      clientId: productionClientId,
+      callbackUrl: callbackUrl,
+      clientSecrete: prodClientSecret,
+      language: 'en',
+      serviceProviderEnglishName: spcName,
+      serviceProviderArabicName: spcName,
+      isProduction: true, // Set to false to use staging environment
+    );
+
+    try {
+      // Logout if already authenticated
+      if (_token != null) {
+        await uaePassAPI.logout(context);
+        _token = null;
+        _user = null;
+        setState(() {});
+        return;
+      }
+
+      // Initiate sign-in and obtain authorization code
+      String? code = await uaePassAPI.signIn(context);
+      if (code != null) {
+        // Exchange code for access token
+        _token = await uaePassAPI.getAccessToken(code);
+
+        // Fetch user profile using access token
+        if (_token != null) {
+          _user = await uaePassAPI.getUserProfile(_token!, context: context);
+        }
+      }
+    } catch (e, s) {
+      // Log any errors that occur during the authentication flow
+      if (kDebugMode) {
+        print(e);
+        print(s);
+      }
+    }
+
+    // Refresh UI after login/logout
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text(widget.title),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Text(
+              _token == null ? 'Press the button below to login with UAE PASS.' : 'You are logged in. Press the button below to logout.',
+            ),
+            const SizedBox(height: 10),
+            if (_token != null)
+              ListTile(
+                title: const Text("Access Token:"),
+                subtitle: Text(_token ?? ""),
+              ),
+            if (_user != null)
+              Column(
+                children: [
+                  ListTile(
+                    title: const Text("Full Name:"),
+                    subtitle: Text("${_user?.firstNameEN} ${_user?.lastNameEN}"),
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _loginOrLogout,
+        tooltip: _token == null ? 'Login with UAE PASS' : 'Logout',
+        child: const Icon(Icons.login),
+      ),
+    );
+  }
+}
+
+
+
+================================================
+FILE: example/test/widget_test.dart
+================================================
+// This is a basic Flutter widget test.
+//
+// To perform an interaction with a widget in your test, use the WidgetTester
+// utility in the flutter_test package. For example, you can send tap and scroll
+// gestures. You can also use WidgetTester to find child widgets in the widget
+// tree, read text, and verify that the values of widget properties are correct.
+
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:uaepass_example/main.dart';
+
+void main() {
+  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+    // Build our app and trigger a frame.
+    await tester.pumpWidget(const MyApp());
+
+    // Verify that our counter starts at 0.
+    expect(find.text('0'), findsOneWidget);
+    expect(find.text('1'), findsNothing);
+
+    // Tap the '+' icon and trigger a frame.
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pump();
+
+    // Verify that our counter has incremented.
+    expect(find.text('0'), findsNothing);
+    expect(find.text('1'), findsOneWidget);
+  });
+}
+
+
+
+================================================
+FILE: lib/uaepass_official.dart
+================================================
+library uaepass_official;
+
+export 'uaepass/uae_pass_api.dart';
+export 'model/uaepass_user_profile_model.dart';
+
+
+
+================================================
+FILE: lib/model/uaepass_user_profile_model.dart
+================================================
+class UAEPASSUserProfile {
+  String? sub;
+  String? fullNameAR;
+  String? gender;
+  String? mobile;
+  String? lastNameEN;
+  String? fullNameEN;
+  String? uuid;
+  String? lastNameAR;
+  String? idn;
+  String? nationalityEN;
+  String? firstNameEN;
+  String? userType;
+  String? nationalityAR;
+  String? firstNameAR;
+  String? email;
+
+  UAEPASSUserProfile(
+      {this.sub,
+      this.fullNameAR,
+      this.gender,
+      this.mobile,
+      this.lastNameEN,
+      this.fullNameEN,
+      this.uuid,
+      this.lastNameAR,
+      this.idn,
+      this.nationalityEN,
+      this.firstNameEN,
+      this.userType,
+      this.nationalityAR,
+      this.firstNameAR,
+      this.email});
+
+  UAEPASSUserProfile.fromJson(Map<String, dynamic> json) {
+    sub = json['sub'];
+    fullNameAR = json['fullnameAR'];
+    gender = json['gender'];
+    mobile = json['mobile'];
+    lastNameEN = json['lastnameEN'];
+    fullNameEN = json['fullnameEN'];
+    uuid = json['uuid'];
+    lastNameAR = json['lastnameAR'];
+    idn = json['idn'];
+    nationalityEN = json['nationalityEN'];
+    firstNameEN = json['firstnameEN'];
+    userType = json['userType'];
+    nationalityAR = json['nationalityAR'];
+    firstNameAR = json['firstnameAR'];
+    email = json['email'];
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'sub': sub,
+      'fullnameAR': fullNameAR,
+      'gender': gender,
+      'mobile': mobile,
+      'lastnameEN': lastNameEN,
+      'fullnameEN': fullNameEN,
+      'uuid': uuid,
+      'lastnameAR': lastNameAR,
+      'idn': idn,
+      'nationalityEN': nationalityEN,
+      'firstnameEN': firstNameEN,
+      'userType': userType,
+      'nationalityAR': nationalityAR,
+      'firstnameAR': firstNameAR,
+      'email': email,
+    };
+  }
+}
+
+
+
+================================================
+FILE: lib/model/uaepass_user_token_model.dart
+================================================
+class UAEPASSUserToken {
+  String? accessToken;
+  String? scope;
+  String? tokenType;
+  int? expiresIn;
+
+  UAEPASSUserToken({this.accessToken, this.scope, this.tokenType, this.expiresIn});
+
+  UAEPASSUserToken.fromJson(Map<String, dynamic> json) {
+    accessToken = json['access_token'];
+    scope = json['scope'];
+    tokenType = json['token_type'];
+    expiresIn = json['expires_in'];
+  }
+}
+
+
+
+================================================
+FILE: lib/service/memory_service.dart
+================================================
+import 'package:get_storage/get_storage.dart';
+
+
+class MemoryService {
+  static final MemoryService _mInstance = MemoryService._();
+
+  static MemoryService get instance => _mInstance;
+
+  late GetStorage _storage;
+
+  MemoryService._() {
+    _storage = GetStorage('uae-pass-app');
+  }
+
+  Future initialize() async {
+    await GetStorage.init('uae-pass-app');
+  }
+
+
+
+  String? get accessCode => _storage.read("accessCode");
+  set accessCode(String? value) => _storage.write("accessCode", value);
+
+
+}
+
+
+
+================================================
+FILE: lib/uaepass/constant.dart
+================================================
+/// The [Const] class provides UAE Pass-specific constants and utility methods
+/// to support authentication flows and environment-based configurations.
+class Const {
+  /// Authentication Context Class Reference (ACR) for UAE Pass mobile authentication.
+  /// This is used to identify the mobile on-device flow during login.
+  static const String uaePassMobileACR = "urn:digitalid:authentication:flow:mobileondevice";
+
+  /// Authentication Context Class Reference (ACR) for UAE Pass web authentication.
+  /// This is used to identify the web-based low-assurance authentication flow.
+  static const String uaePassWebACR = "urn:safelayer:tws:policies:authentication:level:low";
+
+  /// URL scheme for redirecting back from UAE Pass app in the production environment.
+  static String uaePassProdScheme = 'uaepass://';
+
+  /// URL scheme for redirecting back from UAE Pass app in the staging/test environment.
+  static String uaePassStgScheme = 'uaepassstg://';
+
+  /// Base URL for the UAE Pass identity provider API in the **production** environment.
+  static const String _uaePassProdBaseUrl = 'https://id.uaepass.ae';
+
+  /// Base URL for the UAE Pass identity provider API in the **staging/test** environment.
+  static const String _uaePassStgBaseUrl = 'https://stg-id.uaepass.ae';
+
+  /// Returns the appropriate UAE Pass API base URL depending on the environment.
+  ///
+  /// [isProduction] - Set to `true` to retrieve the production URL,
+  /// or `false` to retrieve the staging URL.
+  static String baseUrl(bool isProduction) {
+    return isProduction ? _uaePassProdBaseUrl : _uaePassStgBaseUrl;
+  }
+
+  /// Returns the correct URL scheme used by the UAE Pass app based on environment.
+  ///
+  /// [isProduction] - Set to `true` to retrieve the production scheme (`uaepass://`),
+  /// or `false` to retrieve the staging scheme (`uaepassstg://`).
+  static String uaePassScheme(bool isProduction) {
+    return isProduction ? uaePassProdScheme : uaePassStgScheme;
+  }
+}
+
+
+
+================================================
+FILE: lib/uaepass/uae_pass_api.dart
+================================================
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:uaepass_official/model/uaepass_user_token_model.dart';
+import 'package:uaepass_official/uaepass/constant.dart';
+import 'package:uaepass_official/service/memory_service.dart';
+import 'package:uaepass_official/model/uaepass_user_profile_model.dart';
+import 'package:uaepass_official/uaepass/uaepass_view.dart';
+import 'package:url_launcher/url_launcher_string.dart';
+
+/// The [UaePassAPI] class provides a high-level interface for integrating
+/// with UAE Pass — the official digital identity solution of the UAE government.
+///
+/// This class facilitates authentication by handling redirect flows, token exchanges,
+/// and profile fetching. It supports both installed-app and browser-based login scenarios.
+class UaePassAPI {
+  final String _clientId;
+  final String _callbackUrl;
+  final String _clientSecrete;
+  final String _language;
+  final String _serviceProviderEnglishName;
+  final String _serviceProviderArabicName;
+  final bool _isProduction;
+  final bool _blockSOP1;
+
+  /// Creates an instance of [UaePassAPI].
+  ///
+  /// - [clientId] – The client ID issued by UAE Pass.
+  /// - [callbackUrl] – The redirect URI used after authentication. This must match
+  ///   the URI registered in your UAE Pass dashboard and include your app's custom scheme.
+  /// - [clientSecrete] – The client secret assigned by UAE Pass.
+  /// - [isProduction] – Set to `true` for production; otherwise, use `false` for staging/testing.
+  /// - [blockSOP1] – (Optional) If `true`, blocks SOP1 (Self-Onboarded) users from logging in.
+  /// - [language] – Specifies the language for the login page UI. Accepts `'en'` or `'ar'`.
+  /// - [serviceProviderEnglishName] – (Optional) Display name of your entity in English.
+  /// - [serviceProviderArabicName] – (Optional) Display name of your entity in Arabic.
+  UaePassAPI({
+    required String clientId,
+    required String callbackUrl,
+    required String clientSecrete,
+    String serviceProviderEnglishName = 'Service Provider',
+    String serviceProviderArabicName = 'مزود الخدمة',
+    required bool isProduction,
+    bool blockSOP1 = false,
+    String language = 'en',
+  })  : _clientId = clientId,
+        _callbackUrl = callbackUrl,
+        _clientSecrete = clientSecrete,
+        _serviceProviderEnglishName = serviceProviderEnglishName,
+        _serviceProviderArabicName = serviceProviderArabicName,
+        _isProduction = isProduction,
+        _blockSOP1 = blockSOP1,
+        _language = language;
+
+  /// Constructs the authorization URL used to initiate the UAE Pass login flow.
+  ///
+  /// This URL is dynamically adjusted depending on whether the UAE Pass mobile app
+  /// is installed on the device. If not, a web-based ACR flow is used instead.
+  ///
+  /// Returns a [String] containing the full authorization URL.
+  Future<String> _getURL() async {
+    // Default ACR for mobile app scenario.
+    String acr = Const.uaePassMobileACR;
+    String acrWeb = Const.uaePassWebACR;
+
+    // Check if UAE Pass mobile app is available.
+    bool withApp = await canLaunchUrlString('${Const.uaePassScheme(_isProduction)}digitalid-users-ids');
+    if (!withApp) {
+      acr = acrWeb; // Fallback to web ACR
+    }
+
+    // Build the final authorization URL with required query parameters.
+    return "${Const.baseUrl(_isProduction)}/idshub/authorize?"
+        "response_type=code"
+        "&client_id=$_clientId"
+        "&scope=urn:uae:digitalid:profile:general"
+        "&state=HnlHOJTkTb66Y5H"
+        "&redirect_uri=$_callbackUrl"
+        "&ui_locales=$_language"
+        "&acr_values=$acr";
+  }
+
+  /// Starts the UAE Pass sign-in process by launching the embedded webview.
+  ///
+  /// [context]: Required to push the login webview onto the navigation stack.
+  ///
+  /// Returns the authorization [String] code upon successful login.
+  Future<String?> signIn(BuildContext context) async {
+    await MemoryService.instance.initialize();
+    String url = await _getURL();
+    if (context.mounted) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CustomWebView(
+            url: url,
+            callbackUrl: _callbackUrl,
+            isProduction: _isProduction,
+            locale: _language,
+          ),
+        ),
+      );
+      return MemoryService.instance.accessCode;
+    }
+    return MemoryService.instance.accessCode;
+  }
+
+  /// Exchanges the authorization code for an access token.
+  ///
+  /// [code]: Authorization code received after successful login.
+  ///
+  /// Returns the access token as a [String], or null on failure.
+  Future<String?> getAccessToken(String code) async {
+    try {
+      const String url = "/idshub/token";
+
+      var data = {'redirect_uri': _callbackUrl, 'client_id': _clientId, 'client_secret': _clientSecrete, 'grant_type': 'authorization_code', 'code': code};
+
+      final response = await http.post(
+        Uri.parse(Const.baseUrl(_isProduction) + url),
+        headers: <String, String>{
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: data,
+      );
+
+      if (response.statusCode == 200) {
+        return UAEPASSUserToken.fromJson(jsonDecode(response.body)).accessToken;
+      } else {
+        return null;
+      }
+    } catch (e, s) {
+      if (kDebugMode) {
+        print(e);
+        print(s);
+      }
+    }
+    return null;
+  }
+
+  /// Fetches the authenticated user's profile using the given access token.
+  ///
+  /// [token]: Bearer token received from the token exchange.
+  /// [context]: Used to show unauthorized messages if the user is SOP1 and access is blocked.
+  ///
+  /// Returns a [UAEPASSUserProfile] or `null` if unauthorized or failed.
+  Future<UAEPASSUserProfile?> getUserProfile(String token, {required context}) async {
+    try {
+      const String url = "/idshub/userinfo";
+
+      final response = await http.get(
+        Uri.parse(Const.baseUrl(_isProduction) + url),
+        headers: <String, String>{'Content-Type': 'application/x-www-form-urlencoded', 'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        final profile = UAEPASSUserProfile.fromJson(jsonDecode(response.body));
+
+        if (_blockSOP1 && profile.userType == 'SOP1') {
+          debugPrint('UAEPASS >> UNAUTHORISED >> ${profile.userType} ');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                _language == 'ar'
+                    ? 'أنت غير مؤهل للوصول إلى هذه الخدمة. إما أن حسابك لم تتم ترقيته أو لديك حساب زائر. يرجى الاتصال بـ $_serviceProviderArabicName لتتمكن من الوصول إلى الخدمة.'
+                    : 'You are not eligible to access this service. Your account is either not upgraded or you have a visitor account. Please contact $_serviceProviderEnglishName to access the services.',
+              ),
+              backgroundColor: Colors.red.shade600,
+              behavior: SnackBarBehavior.floating,
+              duration: Duration(seconds: 5),
+            ),
+          );
+
+          return null;
+        }
+        return profile;
+      } else {
+        return null;
+      }
+    } catch (e, s) {
+      if (kDebugMode) {
+        print(e);
+        print(s);
+      }
+    }
+    return null;
+  }
+
+  /// Performs UAE Pass logout by opening the logout endpoint in a webview.
+  ///
+  /// [context]: The [BuildContext] required to navigate to the logout view.
+  Future logout(BuildContext context) async {
+    String url = "${Const.baseUrl(_isProduction)}/idshub/logout?redirect_uri=$_callbackUrl";
+
+    if (context.mounted) {
+      return await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CustomWebView(
+            url: url,
+            callbackUrl: _callbackUrl,
+            isProduction: _isProduction,
+            locale: _language,
+          ),
+        ),
+      );
+    }
+
+    return null;
+  }
+}
+
+
+
+================================================
+FILE: lib/uaepass/uaepass_view.dart
+================================================
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:flutter_fgbg/flutter_fgbg.dart';
+import 'package:uaepass_official/service/memory_service.dart';
+import 'package:uaepass_official/uaepass/constant.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+
+class CustomWebView extends StatefulWidget {
+  final String url;
+  final String callbackUrl;
+  final bool isProduction;
+  final String locale;
+
+  const CustomWebView({super.key, required this.url, required this.callbackUrl, required this.isProduction, this.locale = 'en'});
+
+  @override
+  State<CustomWebView> createState() => _CustomWebViewState();
+}
+
+class _CustomWebViewState extends State<CustomWebView> {
+  late WebViewController controller;
+  String? successUrl;
+  late StreamSubscription<FGBGType> subscription;
+
+  @override
+  void dispose() {
+    subscription.cancel();
+    controller.clearLocalStorage();
+    controller.clearCache();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    subscription = FGBGEvents.instance.stream.listen((event) {
+      if (event == FGBGType.foreground) {
+        if (successUrl != null) {
+          final decoded = Uri.decodeFull(successUrl!);
+          controller.loadRequest(Uri.parse(decoded));
+        }
+      }
+    });
+    controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(const Color(0x00000000))
+      ..clearCache()
+      ..clearLocalStorage()
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (int progress) {},
+          onPageStarted: (String url) {},
+          onPageFinished: (String url) {},
+          onWebResourceError: (WebResourceError error) {},
+          onNavigationRequest: onNavigationRequest,
+        ),
+      )
+      ..loadRequest(Uri.parse(widget.url));
+    super.initState();
+  }
+
+  Future<NavigationDecision> onNavigationRequest(NavigationRequest request) async {
+    String url = request.url.toString();
+    debugPrint('UAEPASS url: $url');
+    if (url.contains('uaepass://')) {
+      Uri uri = Uri.parse(url);
+      String? successURL = uri.queryParameters['successurl'];
+      successUrl = successURL;
+      final newUrl = '${Const.uaePassScheme(widget.isProduction)}${uri.host}${uri.path}';
+      String u = "$newUrl?successurl=${widget.callbackUrl}"
+          "&failureurl=${widget.callbackUrl}"
+          "&closeondone=true";
+      await launchUrl(Uri.parse(u));
+      return NavigationDecision.prevent;
+    }
+
+    if (url.contains('code=')) {
+      String code = Uri.parse(url).queryParameters['code']!;
+      MemoryService.instance.accessCode = code;
+      debugPrint('UAEPASS code: $code');
+      Navigator.of(context).pop(code);
+      return NavigationDecision.prevent;
+    } else if (url.contains('error=invalid_request') ||
+        url.contains('error=login_required') ||
+        url.contains('error=access_denied') ||
+        url.contains('error=cancelledOnApp')) {
+      debugPrint('UAEPASS >> User cancelled the login << ');
+
+      // ✅ Show the SnackBar here as per the uaepass use-case documentation
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(widget.locale == 'ar' ? 'قام المستخدم بإلغاء تسجيل الدخول' : 'User cancelled the login'),
+          backgroundColor: Colors.red.shade600,
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 5),
+        ),
+      );
+
+      if (!url.contains('logout')) {
+        Navigator.pop(context);
+        return NavigationDecision.prevent;
+      }
+    } else if (url == widget.callbackUrl && widget.url.contains('logout')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(widget.locale == 'ar' ? 'تم تسجيل الخروج بنجاح' : 'Successfully Logout'),
+          backgroundColor: Colors.black,
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      Navigator.pop(context);
+      return NavigationDecision.prevent;
+    }
+
+    return NavigationDecision.navigate;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: WebViewWidget(
+        controller: controller,
+      ),
+    );
+  }
+}
+
+
+
+================================================
+FILE: test/uaepass_official_test.dart
+================================================
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  test('adds one to input values', () {});
+}
+
+

@@ -9,8 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:dio/dio.dart';
-import 'package:uaepass_api/uaepass_api.dart';
-import 'package:uaepass_api/uaepass/uaepass_user_profile_model.dart';
+import 'package:adcda_inspector/uaepass/uae_pass_api.dart';
+import 'package:adcda_inspector/uaepass/uaepass_user_profile_model.dart';
 import 'package:adcda_inspector/l10n/app_localizations.dart';
 
 class UAEPassService extends GetxService {
@@ -28,7 +28,6 @@ class UAEPassService extends GetxService {
   final String _clientId = ApiConfig.uaePassClientId;
   final String _clientSecret = ApiConfig.uaePassClientSecret;
   final String _redirectUri = ApiConfig.uaePassRedirectUri;
-  final String _appScheme = "adcdainspector";
   bool get _isProduction => ApiConfig.uaePassEnvironment == 'prod'; // Dynamically read from ApiConfig environment
   
   @override
@@ -41,11 +40,10 @@ class UAEPassService extends GetxService {
   void _initUAEPass() {
     _uaePassAPI = UaePassAPI(
       clientId: _clientId,
+      callbackUrl: _redirectUri,
       clientSecrete: _clientSecret,
-      redirectUri: _redirectUri,
-      appScheme: _appScheme,
-      language: Get.locale?.languageCode ?? 'en',
       isProduction: _isProduction,
+      language: Get.locale?.languageCode ?? 'en',
     );
   }
   
@@ -108,11 +106,10 @@ class UAEPassService extends GetxService {
   void updateLanguage(String langCode) {
     _uaePassAPI = UaePassAPI(
       clientId: _clientId,
+      callbackUrl: _redirectUri,
       clientSecrete: _clientSecret,
-      redirectUri: _redirectUri,
-      appScheme: _appScheme,
-      language: langCode,
       isProduction: _isProduction,
+      language: langCode,
     );
   }
 
@@ -233,16 +230,16 @@ class UAEPassService extends GetxService {
       await _secureStorage.write(key: 'uae_pass_idn', value: userProfile.idn.toString());
     }
     
-    if (userProfile.firstnameEN != null) {
+    if (userProfile.firstNameEN != null) {
       await _secureStorage.write(
           key: 'uae_pass_name_en', 
-          value: '${userProfile.firstnameEN} ${userProfile.lastnameEN ?? ''}');
+          value: '${userProfile.firstNameEN} ${userProfile.lastNameEN ?? ''}');
     }
     
-    if (userProfile.firstnameAR != null) {
+    if (userProfile.firstNameAR != null) {
       await _secureStorage.write(
           key: 'uae_pass_name_ar', 
-          value: '${userProfile.firstnameAR} ${userProfile.lastnameAR ?? ''}');
+          value: '${userProfile.firstNameAR} ${userProfile.lastNameAR ?? ''}');
     }
     
     if (userProfile.email != null) {

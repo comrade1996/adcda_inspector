@@ -46,6 +46,7 @@ dependencies:
   # HTTP and API
   http: ^1.1.0
   dio: ^5.0.0
+  crypto: ^3.0.5
 
   # Utilities and UI enhancement
   shared_preferences: ^2.0.15
@@ -83,7 +84,11 @@ dependencies:
   flutter_launcher_icons: ^0.13.1
   
   # UAE Pass integration
-  uaepass_api: ^1.0.3
+  # Custom UAE PASS integration dependencies
+  webview_flutter: ^4.4.2
+  url_launcher: ^6.3.0
+  flutter_fgbg: ^0.6.0
+  get_storage: ^2.1.1
   
 
 
