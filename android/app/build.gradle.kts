@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -10,9 +12,9 @@ plugins {
 
 // Load keystore properties
 val keystorePropertiesFile = rootProject.file("key.properties")
-val keystoreProperties = java.util.Properties()
+val keystoreProperties = Properties()
 if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
+    keystoreProperties.load(keystorePropertiesFile.inputStream())
 }
 
 android {
@@ -33,14 +35,14 @@ android {
         create("release") {
             keyAlias = keystoreProperties["keyAlias"] as String? ?: System.getenv("KEY_ALIAS")
             keyPassword = keystoreProperties["keyPassword"] as String? ?: System.getenv("KEY_PASSWORD")
-            storeFile = keystoreProperties["storeFile"]?.let { file(it) } ?: System.getenv("KEYSTORE_PATH")?.let { file(it) }
+            storeFile = keystoreProperties["storeFile"]?.let { file(it.toString()) } ?: System.getenv("KEYSTORE_PATH")?.let { file(it) }
             storePassword = keystoreProperties["storePassword"] as String? ?: System.getenv("KEYSTORE_PASSWORD")
         }
     }
 
     defaultConfig {
         applicationId = "com.adcda.inspector"
-        minSdk = flutter.minSdkVersion
+        minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -49,8 +51,9 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
-            isMinifyEnabled = true
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            isMinifyEnabled = false
+            isShrinkResources = false
+            // proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 }
