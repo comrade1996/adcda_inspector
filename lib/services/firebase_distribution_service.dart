@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/foundation.dart';
 
 class FirebaseDistributionService {
   static FirebaseDistributionService? _instance;
@@ -14,9 +15,13 @@ class FirebaseDistributionService {
   static Future<void> initialize() async {
     try {
       await Firebase.initializeApp();
-      print('Firebase initialized successfully');
+      if (kDebugMode) {
+        print('Firebase initialized successfully');
+      }
     } catch (e) {
-      print('Error initializing Firebase: $e');
+      if (kDebugMode) {
+        print('Error initializing Firebase: $e');
+      }
       rethrow;
     }
   }
