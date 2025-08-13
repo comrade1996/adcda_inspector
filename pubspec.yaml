@@ -90,6 +90,13 @@ dependencies:
   flutter_fgbg: ^0.6.0
   get_storage: ^2.1.1
   
+  # Firebase dependencies
+  firebase_core: ^2.24.2
+  firebase_app_distribution: ^0.2.3
+  
+  # Environment configuration
+  flutter_dotenv: ^5.1.0
+  
 
 
 dev_dependencies:
@@ -124,9 +131,9 @@ flutter:
     - assets/survey_data.json
     - assets/images/pattern.png
     - assets/images/adcda_logo.png
-
     - assets/images/loader.json
     - assets/images/loader.gif
+    - assets/env/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

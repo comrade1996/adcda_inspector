@@ -46,3 +46,22 @@ app.*.map.json
 
 # Project specific ignores
 # assets/code/
+
+# Firebase and Security - DO NOT COMMIT
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+android/key.properties
+android/keystore/
+ios/certificates/
+firebase-service-account.json
+
+# Environment files with sensitive data
+assets/env/.env.prod
+assets/env/.env.staging
+assets/env/.env.dev
+
+# Build artifacts
+*.apk
+*.aab
+*.ipa
+*.dSYM.zip

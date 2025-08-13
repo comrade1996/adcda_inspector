@@ -16,9 +16,21 @@ import 'package:adcda_inspector/services/api_service.dart';
 import 'package:adcda_inspector/services/survey_service.dart';
 import 'package:adcda_inspector/services/auth_service.dart';
 import 'package:adcda_inspector/services/uae_pass_service.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Firebase
+  await Firebase.initializeApp();
+  
+  // Load environment variables
+  try {
+    await dotenv.load(fileName: "assets/env/.env.prod");
+  } catch (e) {
+    print("Warning: Could not load environment file: $e");
+  }
 
   // Create a fresh instance of the API service for each query to avoid caching issues
   Get.lazyPut(() => ApiService(), fenix: true);

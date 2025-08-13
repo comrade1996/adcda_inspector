@@ -1,0 +1,181 @@
+name: Firebase App Distribution
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      release_notes:
+        description: "Release notes for this build"
+        required: false
+        default: "Internal build from CI/CD"
+
+env:
+  FLUTTER_VERSION: "3.24.3"
+  JAVA_VERSION: "17"
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: "stable"
+          cache: true
+
+      - name: Get Flutter dependencies
+        run: flutter pub get
+
+      - name: Run Flutter analyzer
+        run: flutter analyze
+
+      - name: Run Flutter tests
+        run: flutter test
+
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/upload-keystore.jks
+
+      - name: Create key.properties
+        run: |
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" > android/key.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
+          echo "storeFile=../upload-keystore.jks" >> android/key.properties
+
+      - name: Decode google-services.json
+        run: |
+          echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > android/app/google-services.json
+
+      - name: Build Android APK
+        run: flutter build apk --release --build-number=${{ github.run_number }}
+
+      - name: Build Android App Bundle
+        run: flutter build appbundle --release --build-number=${{ github.run_number }}
+
+      - name: Upload APK to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          groups: adcda-internal
+          file: build/app/outputs/flutter-apk/app-release.apk
+          releaseNotes: |
+            ${{ github.event.inputs.release_notes || 'Internal build from CI/CD' }}
+
+            Build: ${{ github.run_number }}
+            Commit: ${{ github.sha }}
+            Branch: ${{ github.ref_name }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-builds
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab
+          retention-days: 30
+
+  build-ios:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: "stable"
+          cache: true
+
+      - name: Get Flutter dependencies
+        run: flutter pub get
+
+      - name: Setup iOS certificates and provisioning profiles
+        env:
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          PROVISIONING_PROFILE: ${{ secrets.PROVISIONING_PROFILE }}
+          P12_CERTIFICATE: ${{ secrets.P12_CERTIFICATE }}
+        run: |
+          # Create certificates directory
+          mkdir -p ios/certificates
+
+          # Decode and install certificate
+          echo "$P12_CERTIFICATE" | base64 -d > ios/certificates/certificate.p12
+
+          # Decode provisioning profile
+          echo "$PROVISIONING_PROFILE" | base64 -d > ios/certificates/profile.mobileprovision
+
+          # Create keychain and import certificate
+          security create-keychain -p "temp_password" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "temp_password" build.keychain
+          security import ios/certificates/certificate.p12 -k build.keychain -P "$P12_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "temp_password" build.keychain
+
+          # Install provisioning profile
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp ios/certificates/profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+
+      - name: Decode GoogleService-Info.plist
+        run: |
+          echo "${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}" | base64 -d > ios/Runner/GoogleService-Info.plist
+
+      - name: Build iOS
+        run: |
+          flutter build ios --release --no-codesign --build-number=${{ github.run_number }}
+
+      - name: Build and Archive iOS
+        run: |
+          cd ios
+          xcodebuild -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -destination generic/platform=iOS \
+            -archivePath build/Runner.xcarchive \
+            archive
+
+      - name: Export IPA
+        run: |
+          cd ios
+          xcodebuild -exportArchive \
+            -archivePath build/Runner.xcarchive \
+            -exportPath build \
+            -exportOptionsPlist Runner/ExportOptions.plist
+
+      - name: Upload IPA to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_IOS_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          groups: adcda-internal
+          file: ios/build/Runner.ipa
+          releaseNotes: |
+            ${{ github.event.inputs.release_notes || 'Internal build from CI/CD' }}
+
+            Build: ${{ github.run_number }}
+            Commit: ${{ github.sha }}
+            Branch: ${{ github.ref_name }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-builds
+          path: ios/build/Runner.ipa
+          retention-days: 30
