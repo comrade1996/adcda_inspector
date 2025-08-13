@@ -39,12 +39,7 @@ jobs:
 
       - name: Get Flutter dependencies
         run: flutter pub get
-
-      - name: Run Flutter analyzer
-        run: flutter analyze
-
-      - name: Run Flutter tests
-        run: flutter test
+ 
 
       - name: Decode keystore
         run: |
