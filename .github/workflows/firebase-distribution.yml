@@ -40,6 +40,20 @@ jobs:
       - name: Get Flutter dependencies
         run: flutter pub get
 
+      - name: Create environment file
+        run: |
+          mkdir -p assets/env
+          cat > assets/env/.env.prod << EOF
+          # Firebase Configuration - Production
+          FIREBASE_PROJECT_ID=adcda-inspector-prod
+          FIREBASE_ANDROID_APP_ID=${{ secrets.FIREBASE_ANDROID_APP_ID }}
+          FIREBASE_IOS_APP_ID=${{ secrets.FIREBASE_IOS_APP_ID }}
+          FIREBASE_TESTER_GROUPS=adcda-internal
+          BUILD_ENVIRONMENT=production
+          APP_VERSION=1.0.0
+          BUILD_NUMBER=${{ github.run_number }}
+          EOF
+
       - name: Decode keystore
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/upload-keystore.jks
