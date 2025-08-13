@@ -92,7 +92,6 @@ dependencies:
   
   # Firebase dependencies
   firebase_core: ^2.24.2
-  firebase_app_distribution: ^0.2.3
   
   # Environment configuration
   flutter_dotenv: ^5.1.0
