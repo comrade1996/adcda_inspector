@@ -38,10 +38,10 @@ dependencies:
   cupertino_icons: ^1.0.2
 
   # State management
-  get: ^4.6.5
+  get: ^4.6.6
 
   # Intl support
-  intl: ^0.19.0
+  intl: ^0.20.2
 
   # HTTP and API
   http: ^1.1.0
@@ -53,7 +53,7 @@ dependencies:
   flutter_svg: ^2.0.9
   cached_network_image: ^3.3.1
   flutter_rating_bar: ^4.0.1
-  lottie: ^2.6.0
+  lottie: ^3.3.0
   flutter_animate: ^4.2.0+1
   flutter_boxicons: ^3.0.0
   
@@ -69,29 +69,29 @@ dependencies:
   tailwind_cli: ^0.7.7
 
   # File picker
-  file_picker: ^9.2.0
+  file_picker: ^10.3.1
 
   # Location services
-  geolocator: ^13.0.4
+  geolocator: ^14.0.2
 
   # Device information
-  device_info_plus: ^9.0.2
+  device_info_plus: ^11.5.0
 
   # Google Fonts
   google_fonts: ^6.2.1
 
   # App icon
-  flutter_launcher_icons: ^0.13.1
+  flutter_launcher_icons: ^0.14.4
   
   # UAE Pass integration
   # Custom UAE PASS integration dependencies
   webview_flutter: ^4.4.2
   url_launcher: ^6.3.0
-  flutter_fgbg: ^0.6.0
+  flutter_fgbg: ^0.7.1
   get_storage: ^2.1.1
   
   # Firebase dependencies
-  firebase_core: ^2.24.2
+  firebase_core: ^4.0.0
   
   # Environment configuration
   flutter_dotenv: ^5.1.0
@@ -107,7 +107,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
